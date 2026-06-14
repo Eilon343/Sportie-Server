@@ -4,16 +4,13 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+const authRouter = require('./routers/authRouter');
+app.use('/auth', authRouter);
 
 app.get('/', (req, res) => {
   res.send('Server is running!');
-});
-
-app.get('/test-db', async (req, res) => {
-    const conn = await require('./db_connection').dbConnection.createConnection();
-    const [rows] = await conn.execute('SELECT 1');
-    conn.end();
-    res.send("Database connection test successful: " + JSON.stringify(rows));
 });
 
 app.listen(port, () => {
