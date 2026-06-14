@@ -1,0 +1,20 @@
+{
+  "name": "webprojectserver",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "EilonYaniv",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
