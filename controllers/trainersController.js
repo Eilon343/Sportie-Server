@@ -1,4 +1,4 @@
-const { dbConnection } = require('../db/dbConnection');
+const { dbConnection } = require('../db_connection');
 
 exports.trainersController = {
     async getTrainerById(req, res) {
