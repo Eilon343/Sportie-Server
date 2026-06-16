@@ -9,7 +9,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const authRouter = require('./routers/authRouter');
+const trainerRouter = require('./routers/trainerRouter');
+const traineeRouter = require('./routers/traineeRouter');
+
 app.use('/api/auth', authRouter);
+app.use('/api/trainers', trainerRouter);
+app.use('/api/trainees', traineeRouter);
 
 app.get('/', (req, res) => {
   res.send('Server is running!');
