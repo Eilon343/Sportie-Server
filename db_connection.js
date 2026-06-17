@@ -8,6 +8,11 @@ exports.dbConnection = {
                 user: process.env.DB_USERNAME,
                 password: process.env.DB_PASSWORD,
                 database: process.env.DB_NAME,
+                waitForConnections: true,
+                connectionLimit: 10,
+                ssl: {
+                    rejectUnauthorized: true
+                },
                 ...options
             });
             console.log('Database connection established successfully.');
@@ -18,3 +23,4 @@ exports.dbConnection = {
         }
     }
 }
+

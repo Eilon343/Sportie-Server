@@ -4,12 +4,7 @@ const fs = require('fs');
 const { dbConnection } = require('./db_connection');
 
 async function initDb(){
-    const conn = await mysql.createConnection({
-        host: process.env.DB_HOST,
-        user: process.env.DB_USERNAME,
-        password: process.env.DB_PASSWORD,
-        multipleStatements: true
-    });
+    const conn = await dbConnection.createConnection({ multipleStatements: true });
     const sql = fs.readFileSync('./db_init.sql', 'utf-8');
 
     try {

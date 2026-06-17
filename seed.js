@@ -11,6 +11,7 @@ async function seedDb() {
         console.log('Connected to the database.');
         console.log('Cleaning database safely...');
 
+        await connection.query('use sportieDb');
         await connection.query('SET FOREIGN_KEY_CHECKS = 0');
         await connection.query('TRUNCATE TABLE trainer_monthly_activity');
         await connection.query('TRUNCATE TABLE trainees');
