@@ -17,6 +17,8 @@ exports.trainersController = {
         } catch (error) {
             console.error('Error fetching trainer:', error);
             res.status(500).send('Error fetching trainer: ' + error.message);
+        } finally {
+            conn.end();
         }
     },
 
@@ -29,6 +31,8 @@ exports.trainersController = {
         } catch (error) {
             console.error('Error fetching trainers:', error);
             res.status(500).send('Error fetching trainers: ' + error.message);
+        } finally {
+            conn.end();
         }
     },
 
@@ -45,6 +49,8 @@ exports.trainersController = {
         } catch (error) {
             console.error('Error fetching monthly active trainees:', error);
             res.status(500).send('Error fetching monthly active trainees: ' + error.message);
+        } finally {
+            conn.end();
         }
     }
 }
