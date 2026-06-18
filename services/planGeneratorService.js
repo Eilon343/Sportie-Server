@@ -10,9 +10,10 @@ const DEFAULT_BODY_PARTS = ['chest', 'back', 'upper legs', 'shoulders'];
 
 function buildSplit(bodyParts, daysPerWeek) {
   const split = Array.from({ length: daysPerWeek }, () => []);
-  bodyParts.forEach((part, i) => {
-    split[i % daysPerWeek].push(part);
-  });
+  for (let i = 0; i < daysPerWeek; i++) {
+    const part = bodyParts[i % bodyParts.length];
+    split[i].push(part);
+  }
   return split;
 }
 
