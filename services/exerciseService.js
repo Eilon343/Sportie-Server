@@ -9,6 +9,7 @@ const exerciseApi = axios.create({
   },
 });
 
+// Get exercises, optionally filtered by body part, target, or equipment
 async function getExercises({ bodyPart, target, equipment, limit = 20, offset = 0 } = {}) {
   let path = '/exercises';
   if (bodyPart) path = `/exercises/bodyPart/${bodyPart}`;
@@ -19,14 +20,41 @@ async function getExercises({ bodyPart, target, equipment, limit = 20, offset = 
   return data;
 }
 
+// One exercise by id
 async function getExerciseById(id) {
   const { data } = await exerciseApi.get(`/exercises/exercise/${id}`);
   return data;
 }
 
+// Search exercises by name
+async function searchExercisesByName(name, { limit = 20, offset = 0 } = {}) {
+  const { data } = await exerciseApi.get(`/exercises/name/${name}`, {
+    params: { limit, offset },
+  });
+  return data;
+}
+
+// Lists for building dropdowns / filters in the trainer UI
 async function getBodyPartList() {
   const { data } = await exerciseApi.get('/exercises/bodyPartList');
   return data;
 }
 
-module.exports = { getExercises, getExerciseById, getBodyPartList };
+async function getTargetList() {
+  const { data } = await exerciseApi.get('/exercises/targetList');
+  return data;
+}
+
+async function getEquipmentList() {
+  const { data } = await exerciseApi.get('/exercises/equipmentList');
+  return data;
+}
+
+module.exports = {
+  getExercises,
+  getExerciseById,
+  searchExercisesByName,
+  getBodyPartList,
+  getTargetList,
+  getEquipmentList,
+};
