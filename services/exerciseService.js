@@ -1,53 +1,42 @@
-const axios = require('axios');
+const { buildUrl, getJSON } = require('./httpClient');
 
-const exerciseApi = axios.create({
-  baseURL: 'https://exercisedb.p.rapidapi.com',
-  headers: {
-    'x-rapidapi-key': process.env.EXERCISEDB_KEY,
-    'x-rapidapi-host': 'exercisedb.p.rapidapi.com',
-    'Content-Type': 'application/json',
-  },
-});
+const BASE_URL = process.env.EXERCISEDB_BASE_URL;
+const HEADERS = {
+  'x-rapidapi-key': process.env.EXERCISEDB_KEY,
+  'x-rapidapi-host': process.env.EXERCISEDB_HOST,
+  'Content-Type': 'application/json',
+};
 
-// Get exercises, optionally filtered by body part, target, or equipment
 async function getExercises({ bodyPart, target, equipment, limit = 20, offset = 0 } = {}) {
   let path = '/exercises';
   if (bodyPart) path = `/exercises/bodyPart/${bodyPart}`;
   else if (target) path = `/exercises/target/${target}`;
   else if (equipment) path = `/exercises/equipment/${equipment}`;
 
-  const { data } = await exerciseApi.get(path, { params: { limit, offset } });
-  return data;
+  return getJSON(buildUrl(BASE_URL, path, { limit, offset }), HEADERS);
 }
 
 // One exercise by id
 async function getExerciseById(id) {
-  const { data } = await exerciseApi.get(`/exercises/exercise/${id}`);
-  return data;
+  return getJSON(buildUrl(BASE_URL, `/exercises/exercise/${id}`), HEADERS);
 }
 
 // Search exercises by name
 async function searchExercisesByName(name, { limit = 20, offset = 0 } = {}) {
-  const { data } = await exerciseApi.get(`/exercises/name/${name}`, {
-    params: { limit, offset },
-  });
-  return data;
+  return getJSON(buildUrl(BASE_URL, `/exercises/name/${name}`, { limit, offset }), HEADERS);
 }
 
 // Lists for building dropdowns / filters in the trainer UI
 async function getBodyPartList() {
-  const { data } = await exerciseApi.get('/exercises/bodyPartList');
-  return data;
+  return getJSON(buildUrl(BASE_URL, '/exercises/bodyPartList'), HEADERS);
 }
 
 async function getTargetList() {
-  const { data } = await exerciseApi.get('/exercises/targetList');
-  return data;
+  return getJSON(buildUrl(BASE_URL, '/exercises/targetList'), HEADERS);
 }
 
 async function getEquipmentList() {
-  const { data } = await exerciseApi.get('/exercises/equipmentList');
-  return data;
+  return getJSON(buildUrl(BASE_URL, '/exercises/equipmentList'), HEADERS);
 }
 
 module.exports = {

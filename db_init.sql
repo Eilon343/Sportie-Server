@@ -14,7 +14,7 @@ create table if not exists trainers (
     name varchar(255) not null,
     specialization varchar(255) not null,
     avatar_color varchar(50),
-    avatar_url varchar(255),
+    avatar_url longtext,
     foreign key (trainer_id) references users(user_id) on delete cascade
 );
 
@@ -33,7 +33,7 @@ create table if not exists trainees(
     progress int default 0,
     last_activity varchar(255),
     avatar_color varchar(50),
-    avatar_url varchar(255),
+    avatar_url longtext,
     trainer_id int,
     foreign key (trainer_id) references trainers(trainer_id),
     foreign key (trainee_id) references users(user_id) on delete cascade
