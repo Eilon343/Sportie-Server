@@ -38,3 +38,35 @@ create table if not exists trainees(
     foreign key (trainer_id) references trainers(trainer_id),
     foreign key (trainee_id) references users(user_id) on delete cascade
 );
+
+create table if not exists exercises (
+    exercise_id varchar(50) primary key,
+    name varchar(255) not null,
+    body_part varchar(100) not null,
+    target varchar(100) not null,
+    equipment varchar(100) not null,
+    gif_url varchar(255) not null,
+    difficulty varchar(50)
+);
+
+create table if not exists training_plans (
+    plan_id int auto_increment primary key,
+    trainee_id int,
+    goal varchar(100),
+    days_per_week int,
+    created_at timestamp default current_timestamp,
+    foreign key (trainee_id) references trainees(trainee_id) on delete cascade
+);
+
+create table if not exists plan_exercises (
+    plan_exercise_id int auto_increment primary key,
+    plan_id int,
+    exercise_id varchar(50) null,
+    custom_exercise_name varchar(255) null,
+    day_index int,
+    sets int,
+    reps int,
+    rest_seconds int,
+    foreign key (plan_id) references training_plans(plan_id) on delete cascade,
+    foreign key (exercise_id) references exercises(exercise_id) on delete cascade
+);
