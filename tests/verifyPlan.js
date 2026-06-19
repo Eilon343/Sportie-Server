@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { dbConnection } = require('./db_connection');
+const { dbConnection } = require('../db_connection');
 
 // Throwaway read-only check for a saved plan. Reuses db_connection.js (same mysql2 +
 // SSL/TiDB config as checkAnalyticsData.js). No writes.

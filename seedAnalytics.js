@@ -1,14 +1,6 @@
 require('dotenv').config();
 const { dbConnection } = require('./db_connection');
 
-// Seed the analytics tables (training_plans, workout_sessions, logged_sets,
-// trainee_metrics) from the CURRENT db state. FRONTEND/DATA ONLY:
-// never touches trainees, trainers, users, exercises, plan_exercises.
-//
-// Root cause of the previous empty seed: it iterated over existing training_plans,
-// which are EMPTY, so every insert was skipped. This version creates the plans
-// first (step 1) and drives everything from the live trainees roster.
-
 const GOALS = ['weight loss', 'muscle gain', 'endurance', 'general fitness', 'strength'];
 const WINDOW_WEEKS = 12;
 const STATEMENT_TIMEOUT_MS = 15000; // per-statement guard so a hang can't stall forever
@@ -60,7 +52,7 @@ async function seed() {
         }
     }
 
-    // Reject (instead of hanging forever) if a single statement stalls, and tear the
+    // Reject if a single statement stalls, and tear the
     // connection down so the process can exit. Each query is awaited individually so a
     // hang is always attributable to one labelled statement.
     function withTimeout(label, promise) {

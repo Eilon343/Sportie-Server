@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { dbConnection } = require('./db_connection');
+const { dbConnection } = require('../db_connection');
 
 // Throwaway read-only diagnostic. Reuses the app's db_connection.js (same mysql2 +
 // SSL/TiDB config as migrate.js). No writes, no schema changes.
