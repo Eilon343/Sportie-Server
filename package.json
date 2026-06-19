@@ -10,7 +10,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon index.js",
     "dev": "nodemon index.js",
-    "db:init": "node db_init.js"
+    "db:init": "node db_init.js",
+    "migrate": "node migrate.js",
+    "seed:analytics": "node seedAnalytics.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

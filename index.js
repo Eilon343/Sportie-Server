@@ -24,6 +24,7 @@ const exerciseRouter = require('./routers/exerciseRouter');
 const mealRouter = require('./routers/mealRouter');
 const planRouter = require('./routers/planRouter');
 const usersRouter = require('./routers/usersRouter');
+const analyticsRouter = require('./routes/analyticsRoutes');
 
 app.use('/api/auth', authRouter);
 app.use('/api/trainers', trainersRouter);
@@ -32,6 +33,7 @@ app.use('/api/exercises', exerciseRouter);
 app.use('/api/meals', mealRouter);
 app.use('/api/plans', planRouter);
 app.use('/api/users', usersRouter);
+app.use('/api/analytics', analyticsRouter);
 
 app.get('/', (req, res) => {
   res.send('Server is running!');

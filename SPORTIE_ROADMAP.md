@@ -1,10 +1,10 @@
-# Sportie — Roadmap to a Presentable Project
+# Sportie Server — Backend Roadmap
 
-A practical checklist of what's done, what's left, and what would make this stand out in interviews. Ordered by priority: do the **Must-Have** items first (they make it *work*), then **Polish** (makes it *impressive*), then **Stretch** (makes it *memorable*).
+Backend missions needed to make Sportie complete, ordered by priority: **Must-Have** (makes it *work*) → **Polish** (makes it *professional*) → **Stretch** (makes it *memorable*). Frontend work is tracked separately at the bottom under **Frontend Missions**.
 
 ---
 
-## Where the project stands today
+## Where the backend stands today
 
 **Backend (Node/Express + TiDB Cloud)**
 - Auth: signup + login with bcrypt, login returns the trainer profile.
@@ -14,57 +14,60 @@ A practical checklist of what's done, what's left, and what would make this stan
   - ExerciseDB (RapidAPI) — exercises, body parts, targets, equipment, search.
   - TheMealDB — search, filters, categories, random.
   - Plan generator — rules engine that builds a workout from goal + days + body parts.
+- Plan persistence: `training_plans` + `plan_exercises` tables exist and `POST /api/plans/save` saves a generated plan to a trainee.
+- Startup env-var guard in `index.js` fails fast when a required key is missing.
 
-**Frontend (plain HTML/CSS/JS)**
-- Converted to ES modules.
-- `dataService.js` / `authService.js` talk to the real backend (no more JSON mock).
-- Login, dashboard (stats + monthly chart), and trainees page all read live from TiDB.
-- Status badges and filtering working end to end.
-
-**What this means:** the spine of the app works. The remaining work is breadth (more pages), persistence (saving generated plans), and the production/presentation layer.
+**What this means:** the spine of the backend works and generated plans can now be saved. The remaining work is reading saved plans back, security/auth hardening, quota protection, and the production layer.
 
 ---
 
-## 1. Must-Have — makes the project actually complete
+## 0. Course submission requirements (graded) — alignment check
 
-These are the gaps that an interviewer would notice immediately if missing.
+Derived from the course submission spec (`הגשת פרוייקט הקורס 2026`). These are **graded / blocking** — they outrank the nice-to-haves below. Only backend-relevant items are listed; frontend is referenced only where the backend must interoperate with it.
+
+### Already aligned ✅
+- [x] **Node.js + Express**, organized into `routes/` + `controllers/` (+ `services/`).
+- [x] **Full CRUD exists** — Create (signup, `assignTrainee`, `savePlan`), Read (trainees/trainers/exercises/meals/monthly activity), Update (`updateOwnProfile`, `updateManagedTrainee`, `changePassword`), Delete (`deleteTrainer`, `unassignTrainee`).
+- [x] **≥2 "complex" queries** — JOIN (`getTrainerById` joins `trainers`+`users`) and an aggregation/stats query (`getMonthlyActiveTrainees`). Filtering by trainer/status also present.
+- [x] **External public API tied to the domain** — ExerciseDB + TheMealDB are real parts of the system, not decorative.
+- [x] **Git hygiene** — `.gitignore` excludes `node_modules/` and `.env`; neither is committed. (Spec forbids committing secrets / `node_modules`.)
+
+### Required — still to do 🚧
+- [ ] **Deploy to a public URL (BLOCKING).** Spec: *no localhost-only submission; the project must be reachable via a live link.* Backend on Render/Railway, DB on TiDB Cloud. Update CORS to the deployed frontend origin. *(Was listed under Stretch — it is actually mandatory.)*
+- [ ] **Publish a Postman API Collection** covering every route, each with: short description, sample valid request, sample success response, and a sample error response where relevant. Save example responses in the collection. This is part of the API grade and a required deliverable.
+- [ ] **Fix schema drift in `db_init.sql` (BLOCKING for the grader's DB setup).** The controllers read/write columns that `db_init.sql` does not create: `users.date_of_birth`, `users.country_code`, `users.phone_number`; `trainees.status`, `trainees.start_weight`, `trainees.current_weight`; `trainers.units`, `trainers.notifications_enabled`. Running `npm run db:init` today produces a schema the code cannot run against — bring the SQL in sync with the code.
+- [ ] **Consistent, clear success & error responses.** Several controllers still return plain-text errors (`res.send('Error ...')`) on 500 instead of JSON `{ message }`. Spec requires clear responses for both success and error — standardize on JSON `{ message }` everywhere. *(See 1.3.)*
+- [ ] **User management completeness (10 pts).** Signup only creates a `users` row, not a `trainers` row, so a freshly signed-up trainer has no profile and can't log in. Close this (see 1.2).
+- [ ] **Clean code (ES6, no dead code, meaningful names) (10 pts).** Remove leftover `console.log` debugging (see 2.4) and any unused code/routes.
+- [ ] **Submission packaging** — include the `.env` file *inside* the ZIP (not committed to Git); record in the testers' notes which external APIs and which JS library were used, plus any setup steps. *(Documentation deliverable, not code.)*
+
+---
+
+## 1. Must-Have — makes the backend actually complete
 
 ### 1.1 Plan-saving database layer
-Right now the generator builds a plan **in memory** and throws it away. A trainer can't save a plan to a trainee. This is the single most important missing feature — it's the core promise of the product.
+The generator builds a plan and a trainer can now **save** it to a trainee. Saving is done; reading saved plans back is not yet wired.
 
-- [ ] Add two tables: `workout_plans` (id, trainer_id, trainee_id, name, goal, created_at) and `plan_exercises` (plan_id, exercise_id, day, sets, reps, rest, order).
-- [ ] `services/planService.js` — DB layer (uses `dbConnection`), separate from the generator.
-- [ ] `controllers/planController.js` — add save/read handlers alongside the existing generate handler.
-- [ ] Endpoints: `POST /api/plans` (save), `GET /api/plans/trainee/:id` (a trainee's plans), `GET /api/plans/:id` (one plan).
-- [ ] Store only the ExerciseDB **id** + sets/reps; hydrate full details from ExerciseDB on read.
+- [x] Add the two tables — implemented as `training_plans` (plan_id, trainee_id, goal, days_per_week, created_at) and `plan_exercises` (plan_exercise_id, plan_id, exercise_id, custom_exercise_name, day_index, sets, reps, rest_seconds) in `db_init.sql`.
+- [ ] `services/planService.js` — DB layer (uses `dbConnection`), separate from the generator. *(Currently the save logic lives inline in `planController.js`; not yet extracted into a service.)*
+- [x] `controllers/planController.js` — save handler (`savePlan`) added alongside the generate handler.
+- [ ] Read handlers in `planController.js` — fetch a trainee's plans / a single plan.
+- [x] Endpoint `POST /api/plans/save` (save).
+- [ ] Endpoints `GET /api/plans/trainee/:id` (a trainee's plans), `GET /api/plans/:id` (one plan).
+- [x] Store only the ExerciseDB **id** + sets/reps (with a `custom_exercise_name` fallback); hydrate full details from ExerciseDB on read.
 
-### 1.2 Build the remaining pages
-Each existing HTML mockup needs a page JS file (same pattern as `dashboard.js` / `trainees.js`): import service → fetch → render.
+### 1.2 Signup flow (backend side)
+The backend has `POST /api/auth/signup`, but it currently only creates a `users` row, not a `trainers` row — a new trainer would have no profile.
 
-- [ ] **Templates page** — the plan generator UI (pick goal, days, body parts → generate → show plan → save to a trainee). This is your showcase page.
-- [ ] **Trainee profile page** — clicking a trainee row currently only logs to console. Build the profile view: their info, status, progress, and saved plans.
-- [ ] **Meals page** (or section) — search/browse TheMealDB, attach meals to a trainee's plan.
-- [ ] **Analytics page** — at least one real chart beyond the dashboard (e.g. status breakdown, progress distribution).
-- [ ] **Settings page** — even if minimal, wire the trainer's own profile (name, specialization, avatar).
-- [ ] **Messages page** — if not building real messaging, make it an honest "coming soon" rather than a dead mockup.
+- [ ] Decide how a trainer profile gets created on signup, and create the `trainers` row as part of the signup transaction.
+- [ ] Return enough data (or auto-login payload) for the frontend to continue after signup.
 
-### 1.3 Signup flow
-The backend has `POST /api/auth/signup`, but the frontend never calls it. The login page has a sign-up toggle that currently routes through `login()`.
-
-- [ ] Wire the sign-up branch in `formValidation.js` to actually POST to `/signup`.
-- [ ] After signup, either auto-login or redirect to login with a success message.
-- [ ] Note: signup currently only creates a `users` row, not a `trainers` row — a new trainer would have no profile. Decide how a trainer profile gets created on signup (this is a real gap worth solving and worth explaining in an interview).
-
-### 1.4 Error & empty states
-- [ ] Show user-friendly messages when a fetch fails (not just `console.error`).
-- [ ] Handle empty data gracefully on every page (no trainees, no plans, no search results).
-- [ ] Loading indicators while API calls are in flight (ExerciseDB calls can take a moment).
+### 1.3 Error response shape
+- [ ] Consistent error response shape across all controllers (`{ message }` everywhere) so the frontend can render user-friendly messages reliably.
 
 ---
 
-## 2. Polish — makes the project look professional
-
-This is the difference between "it works" and "this person knows what they're doing."
+## 2. Polish — makes the backend look professional
 
 ### 2.1 Security & auth hardening
 Strong talking points for interviews.
@@ -85,45 +88,40 @@ Your RapidAPI BASIC tier has a monthly request cap. Generating plans hammers it.
 - [ ] Sanitize/guard route params before they hit SQL (you're using parameterized queries already — good — but validate types).
 
 ### 2.4 Code consistency
-- [ ] Centralize the API base URL on the frontend (it's repeated in `dataService.js` and `authService.js` — pull into one shared constant/module).
-- [ ] Consistent error response shape across all controllers (`{ message }` everywhere).
 - [ ] Remove leftover `console.log` debugging statements.
-- [ ] The optional env-var startup guard in `index.js` (fail fast if a key is missing).
+- [x] Add an env-var startup guard in `index.js` (fail fast if a key is missing) — implemented at `index.js` top (validates `DB_*`, `EXERCISEDB_*`, `MEALDB_BASE_URL`).
+- [ ] Fix unused config: `DB_PORT` in `.env` is unused — `db_connection.js` doesn't read it (defaults apply).
 
 ### 2.5 README
-- [ ] A real `README.md`: what the project is, architecture diagram (frontend → Express → TiDB + external APIs), setup steps, env variables needed, how to run it, screenshots.
+- [ ] A real `README.md`: what the project is, architecture diagram (frontend → Express → TiDB + external APIs), setup steps, env variables needed, how to run it.
 - [ ] This is the first thing anyone looks at. Make it good.
 
 ---
 
-## 3. Stretch — makes the project memorable
+## 3. Stretch — makes the backend memorable
 
-Only after 1 and 2. These are the "wow" items.
+Only after 1 and 2.
 
-- [ ] **Deploy it.** A live URL beats a localhost demo every time. Frontend on Vercel/Netlify, backend on Render/Railway, DB already on TiDB Cloud. Update CORS + API base URL for production.
-- [ ] **Progress tracking.** Let trainers log a trainee's workout completion and watch the progress number / chart update — closes the loop on the whole product.
-- [ ] **Nutrition data.** TheMealDB has no macros. Supplement with a nutrition API (Edamam/Spoonacular) so meal plans show calories/protein — directly relevant for a fitness goal like fat loss.
-- [ ] **LLM-personalized plans (Option B).** Layer Claude on top of the rules engine to personalize exercise selection by injury/preference, validated against ExerciseDB ids. Strong differentiator and ties to your AI interests.
-- [ ] **PDF export.** Generate a printable workout/meal plan a trainer can hand to a trainee.
-- [ ] **Responsive design.** The fixed 1440×1024 canvas scaling works but isn't truly responsive — real mobile support is a plus.
-- [ ] **Tests.** Even a handful of backend endpoint tests (Jest + supertest) signals maturity.
+- [ ] **Deploy the backend.** *(Actually mandatory per the submission spec — see §0.)* Backend on Render/Railway, DB already on TiDB Cloud. Update CORS + allowed origins for production.
+- [ ] **Progress tracking (API).** Endpoints to log a trainee's workout completion and persist progress, so the frontend can close the loop on the whole product.
+- [ ] **Nutrition data.** TheMealDB has no macros. Integrate a nutrition API (Edamam/Spoonacular) so meal plans can show calories/protein — directly relevant for a fitness goal like fat loss.
+- [ ] **LLM-personalized plans (Option B).** Layer Claude on top of the rules engine to personalize exercise selection by injury/preference, validated against ExerciseDB ids. Strong differentiator.
+- [ ] **PDF export (API).** Generate a printable workout/meal plan document a trainer can hand to a trainee.
+- [ ] **Tests.** A handful of backend endpoint tests (Jest + supertest) signals maturity.
 
 ---
 
-## Suggested order of attack
+## Suggested backend order of attack
 
-1. **Plan-saving DB layer** (1.1) — unlocks the core feature.
-2. **Templates page** (1.2) — the showcase; demonstrates the whole flow end to end.
-3. **Trainee profile page** (1.2) — natural next click from the trainees list.
-4. **JWT + route protection** (2.1) — biggest credibility boost for the effort.
+1. **Plan-saving DB layer** (1.1) — save path is done; finish the read endpoints + extract `planService.js`.
+2. **Trainer profile on signup** (1.2) — fixes a real data gap.
+3. **JWT + route protection + authorization** (2.1) — biggest credibility boost for the effort.
+4. **Caching + input validation** (2.2, 2.3) — protects quota and hardens the API.
 5. **README + deploy** (2.5, 3) — so it's shareable and live.
-6. Fill in remaining pages, caching, validation, polish.
-
-Get items 1–5 done and this is a genuinely strong portfolio project. Everything in section 3 is bonus that makes it stand out further.
 
 ---
 
-## Honest gaps worth being able to explain
+## Honest backend gaps worth being able to explain
 
 Interviewers respect knowing your own system's weak points:
 
@@ -135,3 +133,44 @@ Interviewers respect knowing your own system's weak points:
 - **`DB_PORT` in `.env` is unused** — `db_connection.js` doesn't read it (defaults apply).
 
 Being able to name these calmly is a feature, not a flaw.
+
+---
+
+# Frontend Missions
+
+Tracked separately — these complete the project from the client side and depend on the backend endpoints above.
+
+**Frontend stands today (plain HTML/CSS/JS)**
+- Converted to ES modules.
+- `dataService.js` / `authService.js` talk to the real backend (no more JSON mock).
+- Login, dashboard (stats + monthly chart), and trainees page all read live from TiDB.
+- Status badges and filtering working end to end.
+
+### F1. Build the remaining pages
+Each existing HTML mockup needs a page JS file (same pattern as `dashboard.js` / `trainees.js`): import service → fetch → render.
+
+- [ ] **Templates page** — the plan generator UI (pick goal, days, body parts → generate → show plan → save to a trainee). This is the showcase page.
+- [ ] **Trainee profile page** — clicking a trainee row currently only logs to console. Build the profile view: their info, status, progress, and saved plans.
+- [ ] **Meals page** (or section) — search/browse TheMealDB, attach meals to a trainee's plan.
+- [ ] **Analytics page** — at least one real chart beyond the dashboard (e.g. status breakdown, progress distribution).
+- [ ] **Settings page** — even if minimal, wire the trainer's own profile (name, specialization, avatar).
+- [ ] **Messages page** — if not building real messaging, make it an honest "coming soon" rather than a dead mockup.
+
+### F2. Signup flow (frontend side)
+The login page has a sign-up toggle that currently routes through `login()`.
+
+- [ ] Wire the sign-up branch in `formValidation.js` to actually POST to `/signup`.
+- [ ] After signup, either auto-login or redirect to login with a success message.
+
+### F3. Error & empty states
+- [ ] Show user-friendly messages when a fetch fails (not just `console.error`).
+- [ ] Handle empty data gracefully on every page (no trainees, no plans, no search results).
+- [ ] Loading indicators while API calls are in flight (ExerciseDB calls can take a moment).
+
+### F4. Code consistency
+- [ ] Centralize the API base URL on the frontend (it's repeated in `dataService.js` and `authService.js` — pull into one shared constant/module).
+
+### F5. Frontend stretch
+- [ ] **Deploy the frontend** on Vercel/Netlify; update the API base URL for production.
+- [ ] **Progress tracking UI** — let trainers log workout completion and watch the progress number / chart update.
+- [ ] **Responsive design.** The fixed 1440×1024 canvas scaling works but isn't truly responsive — real mobile support is a plus.
