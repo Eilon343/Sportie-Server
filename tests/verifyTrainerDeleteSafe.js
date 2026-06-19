@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { dbConnection } = require('./db_connection');
+const { dbConnection } = require('../db_connection');
 
 // Self-contained, SAFE deleteTrainer test. Creates its OWN throwaway trainer + trainee,
 // deletes the trainer via the API, proves the trainee survives unassigned, then cleans up.

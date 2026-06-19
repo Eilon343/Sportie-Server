@@ -79,17 +79,11 @@ async function seed() {
     }
 
     try {
-        // ---- Clean previous data (FK-safe order). The three analytics tables are -----
-        // ---- script-owned (full delete is safe). For training_plans we delete ONLY the
-        // ---- bare plans this script creates (those with no plan_exercises), computed in
-        // ---- JS as a plain id list — no correlated subquery, so it can't stall.
         console.log('Cleaning previous analytics data (FK-safe order)...');
         await cleanTable('logged_sets', 'DELETE FROM logged_sets');
         await cleanTable('workout_sessions', 'DELETE FROM workout_sessions');
         await cleanTable('trainee_metrics', 'DELETE FROM trainee_metrics');
 
-        // training_plans: figure out which plan_ids are "real" (have plan_exercises) vs
-        // bare/script-created, then delete only the bare ones by explicit id list.
         const [[{ n: planCount }]] = await withTimeout(
             'count training_plans',
             conn.query('SELECT COUNT(*) AS n FROM training_plans')
