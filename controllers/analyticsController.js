@@ -1,10 +1,7 @@
 const { analyticsService } = require('../services/analyticsService');
 
-// Thin HTTP layer: parse params/query, call the service, send the response.
-// No SQL and no business logic here (this feature keeps the layers clean).
-
 exports.analyticsController = {
-    // #1 GET /api/analytics/at-risk/:trainerId
+    //GET /api/analytics/at-risk/:trainerId
     async getAtRisk(req, res) {
         try {
             const data = await analyticsService.getAtRisk(req.params.trainerId);
@@ -15,7 +12,7 @@ exports.analyticsController = {
         }
     },
 
-    // #2 GET /api/analytics/attendance-distribution/:trainerId
+    //GET /api/analytics/attendance-distribution/:trainerId
     async getAttendanceDistribution(req, res) {
         try {
             const data = await analyticsService.getAttendanceDistribution(req.params.trainerId);
@@ -26,7 +23,7 @@ exports.analyticsController = {
         }
     },
 
-    // #3 GET /api/analytics/leaderboard/:trainerId?metric=body_weight|strength
+    //GET /api/analytics/leaderboard/:trainerId?metric=body_weight|strength
     async getLeaderboard(req, res) {
         try {
             const data = await analyticsService.getLeaderboard(req.params.trainerId, req.query.metric);
@@ -37,7 +34,7 @@ exports.analyticsController = {
         }
     },
 
-    // #4 GET /api/analytics/volume-over-time/:trainerId
+    //GET /api/analytics/volume-over-time/:trainerId
     async getVolumeOverTime(req, res) {
         try {
             const data = await analyticsService.getVolumeOverTime(req.params.trainerId);
@@ -48,7 +45,7 @@ exports.analyticsController = {
         }
     },
 
-    // #5 GET /api/analytics/engagement-heatmap/:trainerId
+    //GET /api/analytics/engagement-heatmap/:trainerId
     async getEngagementHeatmap(req, res) {
         try {
             const data = await analyticsService.getEngagementHeatmap(req.params.trainerId);

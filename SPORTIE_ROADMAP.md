@@ -16,8 +16,11 @@ Backend missions needed to make Sportie complete, ordered by priority: **Must-Ha
   - Plan generator — rules engine that builds a workout from goal + days + body parts.
 - Plan persistence: `training_plans` + `plan_exercises` tables exist and `POST /api/plans/save` saves a generated plan to a trainee.
 - Startup env-var guard in `index.js` fails fast when a required key is missing.
+- **Trainer Analytics module** — the project's first fully-layered feature, mounted at `/api/analytics`: `routes/analyticsRoutes.js` → `controllers/analyticsController.js` (req/res only) → `services/analyticsService.js` (rules + DTO shaping) → `repositories/analyticsRepo.js` (all parameterized SQL). Five roster-wide, trainer-scoped analyses: at-risk trainees, attendance distribution, improvement leaderboard (body-weight % change or Epley est-1RM strength), volume-over-time (grouped by ISO week), and engagement heatmap. This `repositories/` layer is new and is the reference architecture for the rest of the backend.
+- **Three analytics tables** — `workout_sessions`, `logged_sets`, `trainee_metrics` — defined in `migrations/001_analytics_tables.sql` (TiDB/MySQL types, FKs to existing `trainees`/`training_plans`/`exercises`/`plan_exercises`). This is the project's first migration; a one-shot runner `migrate.js` (`npm run migrate`) applies it. **These tables are NOT in `db_init.sql`** — they only exist after `npm run migrate`.
+- **Analytics data tooling** — `seedAnalytics.js` (`npm run seed:analytics`) generates realistic sessions/sets/metrics across a 12-week window; `checkAnalyticsData.js` prints row-count diagnostics. Both reuse `db_connection.js`.
 
-**What this means:** the spine of the backend works and generated plans can now be saved. The remaining work is reading saved plans back, security/auth hardening, quota protection, and the production layer.
+**What this means:** the spine of the backend works, generated plans can be saved, and the analytics **read** layer is built and serves as the clean architectural template (controller/service/repo). The remaining work is reading saved plans back, **write/logging endpoints to populate the analytics tables from the app** (today only the seed script writes them), security/auth hardening, quota protection, and the production layer.
 
 ---
 
@@ -26,16 +29,16 @@ Backend missions needed to make Sportie complete, ordered by priority: **Must-Ha
 Derived from the course submission spec (`הגשת פרוייקט הקורס 2026`). These are **graded / blocking** — they outrank the nice-to-haves below. Only backend-relevant items are listed; frontend is referenced only where the backend must interoperate with it.
 
 ### Already aligned ✅
-- [x] **Node.js + Express**, organized into `routes/` + `controllers/` (+ `services/`).
-- [x] **Full CRUD exists** — Create (signup, `assignTrainee`, `savePlan`), Read (trainees/trainers/exercises/meals/monthly activity), Update (`updateOwnProfile`, `updateManagedTrainee`, `changePassword`), Delete (`deleteTrainer`, `unassignTrainee`).
-- [x] **≥2 "complex" queries** — JOIN (`getTrainerById` joins `trainers`+`users`) and an aggregation/stats query (`getMonthlyActiveTrainees`). Filtering by trainer/status also present.
+- [x] **Node.js + Express**, organized into `controllers/` + `services/` (+ `routers/`), with the analytics feature adding a `routes/` + `repositories/` layered reference (controller → service → repo).
+- [x] **Full CRUD exists** — Create (signup, `assignTrainee`, `savePlan`), Read (trainees/trainers/exercises/meals/monthly activity/analytics), Update (`updateOwnProfile`, `updateManagedTrainee`, `changePassword`), Delete (`deleteTrainer`, `unassignTrainee`).
+- [x] **≥2 "complex" queries** — JOIN (`getTrainerById` joins `trainers`+`users`), aggregation/stats (`getMonthlyActiveTrainees`), and the analytics repo's multi-table aggregations (ISO-week `YEARWEEK` grouping for volume/heatmap, `SUM(weight*reps)` volume, earliest-vs-latest leaderboard, attendance counts). Filtering by trainer/status also present.
 - [x] **External public API tied to the domain** — ExerciseDB + TheMealDB are real parts of the system, not decorative.
 - [x] **Git hygiene** — `.gitignore` excludes `node_modules/` and `.env`; neither is committed. (Spec forbids committing secrets / `node_modules`.)
 
 ### Required — still to do 🚧
 - [ ] **Deploy to a public URL (BLOCKING).** Spec: *no localhost-only submission; the project must be reachable via a live link.* Backend on Render/Railway, DB on TiDB Cloud. Update CORS to the deployed frontend origin. *(Was listed under Stretch — it is actually mandatory.)*
 - [ ] **Publish a Postman API Collection** covering every route, each with: short description, sample valid request, sample success response, and a sample error response where relevant. Save example responses in the collection. This is part of the API grade and a required deliverable.
-- [ ] **Fix schema drift in `db_init.sql` (BLOCKING for the grader's DB setup).** The controllers read/write columns that `db_init.sql` does not create: `users.date_of_birth`, `users.country_code`, `users.phone_number`; `trainees.status`, `trainees.start_weight`, `trainees.current_weight`; `trainers.units`, `trainers.notifications_enabled`. Running `npm run db:init` today produces a schema the code cannot run against — bring the SQL in sync with the code.
+- [ ] **Fix schema drift / fragmented schema setup (BLOCKING for the grader's DB setup).** Two problems: (a) the controllers read/write columns that `db_init.sql` does not create: `users.date_of_birth`, `users.country_code`, `users.phone_number`; `trainees.status`, `trainees.start_weight`, `trainees.current_weight`; `trainers.units`, `trainers.notifications_enabled`. (b) The three analytics tables live only in `migrations/001_analytics_tables.sql`, not `db_init.sql`. So a grader must run **both** `npm run db:init` **and** `npm run migrate` to get a working schema, and `db:init` alone still yields a schema the code crashes against. Reconcile: bring the code-implied columns into the canonical schema and document the init+migrate sequence (or fold the migration into the init path).
 - [ ] **Consistent, clear success & error responses.** Several controllers still return plain-text errors (`res.send('Error ...')`) on 500 instead of JSON `{ message }`. Spec requires clear responses for both success and error — standardize on JSON `{ message }` everywhere. *(See 1.3.)*
 - [ ] **User management completeness (10 pts).** Signup only creates a `users` row, not a `trainers` row, so a freshly signed-up trainer has no profile and can't log in. Close this (see 1.2).
 - [ ] **Clean code (ES6, no dead code, meaningful names) (10 pts).** Remove leftover `console.log` debugging (see 2.4) and any unused code/routes.
@@ -49,7 +52,7 @@ Derived from the course submission spec (`הגשת פרוייקט הקורס 202
 The generator builds a plan and a trainer can now **save** it to a trainee. Saving is done; reading saved plans back is not yet wired.
 
 - [x] Add the two tables — implemented as `training_plans` (plan_id, trainee_id, goal, days_per_week, created_at) and `plan_exercises` (plan_exercise_id, plan_id, exercise_id, custom_exercise_name, day_index, sets, reps, rest_seconds) in `db_init.sql`.
-- [ ] `services/planService.js` — DB layer (uses `dbConnection`), separate from the generator. *(Currently the save logic lives inline in `planController.js`; not yet extracted into a service.)*
+- [ ] `services/planService.js` + `repositories/planRepo.js` — DB layer (uses `dbConnection`), separate from the generator. *(Currently the save logic lives inline in `planController.js`; not yet extracted. The analytics feature — `services/analyticsService.js` + `repositories/analyticsRepo.js` — is now the working template to copy.)*
 - [x] `controllers/planController.js` — save handler (`savePlan`) added alongside the generate handler.
 - [ ] Read handlers in `planController.js` — fetch a trainee's plans / a single plan.
 - [x] Endpoint `POST /api/plans/save` (save).
@@ -63,7 +66,13 @@ The backend has `POST /api/auth/signup`, but it currently only creates a `users`
 - [ ] Return enough data (or auto-login payload) for the frontend to continue after signup.
 
 ### 1.3 Error response shape
-- [ ] Consistent error response shape across all controllers (`{ message }` everywhere) so the frontend can render user-friendly messages reliably.
+- [ ] Consistent error response shape across all controllers (`{ message }` everywhere) so the frontend can render user-friendly messages reliably. *(All controllers — including the new `analyticsController.js` — still return plain-text `res.status(500).send('Error ...')` on failures.)*
+
+### 1.4 Analytics — write/logging endpoints
+The analytics **read** API and its three tables exist, but nothing in the app writes to them yet — only `seedAnalytics.js` populates `workout_sessions` / `logged_sets` / `trainee_metrics`. The five analyses return empty until data is logged.
+
+- [ ] `POST` endpoints (controller → service → `analyticsRepo`) to log a completed `workout_session`, its `logged_sets`, and a `trainee_metric` measurement — so real usage feeds the analytics instead of the seed script.
+- [ ] Run `npm run migrate` as part of DB setup (the three tables are not created by `npm run db:init`).
 
 ---
 
@@ -88,7 +97,7 @@ Your RapidAPI BASIC tier has a monthly request cap. Generating plans hammers it.
 - [ ] Sanitize/guard route params before they hit SQL (you're using parameterized queries already — good — but validate types).
 
 ### 2.4 Code consistency
-- [ ] Remove leftover `console.log` debugging statements.
+- [x] Remove leftover `console.log` debugging statements — none remain in `controllers/`, `services/`, or `repositories/` (only `console.error` for genuine error logging; the standalone `db_init`/`seed`/`migrate`/`check` scripts legitimately log progress).
 - [x] Add an env-var startup guard in `index.js` (fail fast if a key is missing) — implemented at `index.js` top (validates `DB_*`, `EXERCISEDB_*`, `MEALDB_BASE_URL`).
 - [ ] Fix unused config: `DB_PORT` in `.env` is unused — `db_connection.js` doesn't read it (defaults apply).
 
@@ -103,7 +112,7 @@ Your RapidAPI BASIC tier has a monthly request cap. Generating plans hammers it.
 Only after 1 and 2.
 
 - [ ] **Deploy the backend.** *(Actually mandatory per the submission spec — see §0.)* Backend on Render/Railway, DB already on TiDB Cloud. Update CORS + allowed origins for production.
-- [ ] **Progress tracking (API).** Endpoints to log a trainee's workout completion and persist progress, so the frontend can close the loop on the whole product.
+- [~] **Progress tracking (API).** Schema + read side done: `workout_sessions` / `logged_sets` / `trainee_metrics` tables and the `/api/analytics` read endpoints exist. **Still missing the write endpoints** to log workout completion / sets / measurements from the app (tracked in §1.4) — today only the seed script writes this data.
 - [ ] **Nutrition data.** TheMealDB has no macros. Integrate a nutrition API (Edamam/Spoonacular) so meal plans can show calories/protein — directly relevant for a fitness goal like fat loss.
 - [ ] **LLM-personalized plans (Option B).** Layer Claude on top of the rules engine to personalize exercise selection by injury/preference, validated against ExerciseDB ids. Strong differentiator.
 - [ ] **PDF export (API).** Generate a printable workout/meal plan document a trainer can hand to a trainee.
@@ -113,11 +122,12 @@ Only after 1 and 2.
 
 ## Suggested backend order of attack
 
-1. **Plan-saving DB layer** (1.1) — save path is done; finish the read endpoints + extract `planService.js`.
-2. **Trainer profile on signup** (1.2) — fixes a real data gap.
-3. **JWT + route protection + authorization** (2.1) — biggest credibility boost for the effort.
-4. **Caching + input validation** (2.2, 2.3) — protects quota and hardens the API.
-5. **README + deploy** (2.5, 3) — so it's shareable and live.
+1. **Plan-saving DB layer** (1.1) — save path is done; finish the read endpoints + extract `planService.js`/`planRepo.js` (copy the analytics layering).
+2. **Analytics write endpoints** (1.4) — log sessions/sets/metrics so the analytics read API reflects real usage, not seed data.
+3. **Trainer profile on signup** (1.2) — fixes a real data gap.
+4. **JWT + route protection + authorization** (2.1) — biggest credibility boost for the effort.
+5. **Caching + input validation** (2.2, 2.3) — protects quota and hardens the API.
+6. **README + deploy** (2.5, 3) — so it's shareable and live.
 
 ---
 
@@ -131,6 +141,9 @@ Interviewers respect knowing your own system's weak points:
 - **ExerciseDB BASIC tier** — no GIFs, limited request quota; caching mitigates.
 - **TheMealDB** — recipes only, no nutrition/macros.
 - **`DB_PORT` in `.env` is unused** — `db_connection.js` doesn't read it (defaults apply).
+- **Analytics tables are populated only by `seedAnalytics.js`** — there's no API to log real sessions/sets/metrics yet, so the analytics endpoints reflect seeded data, not live usage.
+- **Schema is split across two files** — `db_init.sql` (core tables) and `migrations/001_analytics_tables.sql` (analytics tables); setup needs both `db:init` and `migrate`, and there's no migration tracking table.
+- **Layering is inconsistent** — analytics is cleanly controller/service/repo, but trainers/trainees/users/auth/plans still inline raw SQL in their controllers (refactor target).
 
 Being able to name these calmly is a feature, not a flaw.
 
@@ -152,7 +165,7 @@ Each existing HTML mockup needs a page JS file (same pattern as `dashboard.js` /
 - [ ] **Templates page** — the plan generator UI (pick goal, days, body parts → generate → show plan → save to a trainee). This is the showcase page.
 - [ ] **Trainee profile page** — clicking a trainee row currently only logs to console. Build the profile view: their info, status, progress, and saved plans.
 - [ ] **Meals page** (or section) — search/browse TheMealDB, attach meals to a trainee's plan.
-- [ ] **Analytics page** — at least one real chart beyond the dashboard (e.g. status breakdown, progress distribution).
+- [ ] **Analytics page** — the backend is ready (`/api/analytics`: at-risk, attendance-distribution, leaderboard, volume-over-time, engagement-heatmap). Build the page JS to fetch these and render the charts (e.g. volume-over-time line + engagement heatmap).
 - [ ] **Settings page** — even if minimal, wire the trainer's own profile (name, specialization, avatar).
 - [ ] **Messages page** — if not building real messaging, make it an honest "coming soon" rather than a dead mockup.
 
