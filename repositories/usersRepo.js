@@ -1,7 +1,6 @@
 const { dbConnection } = require('../db_connection');
 
 // Users SQL only, parameterized. The stored password hash is returned to the SERVICE
-// (for bcrypt.compare); it must never travel further than that.
 
 exports.usersRepo = {
     // Returns the user row { password } (the stored hash), or null when no such user.

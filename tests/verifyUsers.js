@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { dbConnection } = require('./db_connection');
+const { dbConnection } = require('../db_connection');
 const bcrypt = require('bcrypt');
 
 // Self-contained, SAFE verification for the users/changePassword refactor. Creates its

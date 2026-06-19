@@ -1,8 +1,5 @@
 const { dbConnection } = require('../db_connection');
 
-// All trainers SQL lives here, parameterized. Multi-statement operations own their whole
-// transaction on ONE connection. Read methods return raw rows; the service shapes them.
-
 exports.trainersRepo = {
     // Explicit column list (NEVER u.*) so users.password can never leak.
     async findById(trainerId) {

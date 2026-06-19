@@ -16,7 +16,7 @@ async function runQuery(sql, params = []) {
 }
 
 exports.analyticsRepo = {
-    // Roster helper: every trainee under a trainer (used to pad zero-rows in the heatmap).
+    //every trainee under a trainer.
     async listTrainees(trainerId) {
         return runQuery(
             'SELECT trainee_id, name FROM trainees WHERE trainer_id = ? ORDER BY trainee_id',
@@ -24,8 +24,8 @@ exports.analyticsRepo = {
         );
     },
 
-    // #1 At-risk: trainees with no completed session in the last 7 days (incl. never trained).
-    // Most-overdue first: never-trained (NULL) on top, then oldest last-completed date.
+    //trainees with no completed session in the last 7 days (incl. never trained).
+    //Most-overdue first: never-trained (NULL) on top, then oldest last-completed date.
     async atRisk(trainerId) {
         return runQuery(
             `SELECT t.trainee_id,
@@ -43,8 +43,8 @@ exports.analyticsRepo = {
         );
     },
 
-    // #2 Attendance: per trainee, completed sessions in last 4 weeks + expected/week from the
-    // latest training plan (highest plan_id). Service computes %/buckets from these raw numbers.
+    //Attendance: per trainee, completed sessions in last 4 weeks + expected/week from the
+    //latest training plan (highest plan_id). Service computes %/buckets from these raw numbers.
     async attendanceRaw(trainerId) {
         return runQuery(
             `SELECT t.trainee_id,
@@ -73,9 +73,9 @@ exports.analyticsRepo = {
         );
     },
 
-    // #3a Leaderboard (body_weight): % change earliest -> latest body_weight metric per trainee.
-    // The UNIQUE(trainee_id, metric_type, measured_at) key guarantees one value per date,
-    // so the MIN/MAX-date joins return exactly one row each. Single-point trainees excluded.
+    /*Leaderboard (body_weight): % change earliest -> latest body_weight metric per trainee.
+        The UNIQUE(trainee_id, metric_type, measured_at) key guarantees one value per date,
+        so the MIN/MAX-date joins return exactly one row each. Single-point trainees excluded.*/
     async leaderboardBodyWeight(trainerId) {
         return runQuery(
             `WITH bounds AS (
@@ -103,9 +103,9 @@ exports.analyticsRepo = {
         );
     },
 
-    // #3b Leaderboard (strength): % change in best est. 1RM (Epley: weight*(1+reps/30))
-    // from the trainee's earliest to latest training day. Max 1RM per day represents that day.
-    // Single-day trainees excluded (first_d <> last_d).
+    /*Leaderboard (strength): % change in best est. 1RM (Epley: weight*(1+reps/30))
+        from the trainee's earliest to latest training day. Max 1RM per day represents that day.
+        Single-day trainees excluded (first_d <> last_d)*/
     async leaderboardStrength(trainerId) {
         return runQuery(
             `WITH daily AS (
@@ -137,8 +137,8 @@ exports.analyticsRepo = {
         );
     },
 
-    // #4 Volume over time: SUM(weight*reps) over the trainer's completed sessions, by ISO week.
-    // YEARWEEK(..., 3) = ISO-8601 week (Monday start, week 1 has >= 4 days).
+    /*Volume over time: SUM(weight*reps) over the trainer's completed sessions, by ISO week.
+        EARWEEK(..., 3) = ISO-8601 week (Monday start, week 1 has >= 4 days).*/
     async volumeOverTime(trainerId) {
         return runQuery(
             `SELECT YEARWEEK(ws.performed_at, 3) AS iso_yearweek,
@@ -155,8 +155,8 @@ exports.analyticsRepo = {
         );
     },
 
-    // #5 Engagement heatmap: completed sessions per trainee per ISO week, last 12 weeks.
-    // Returns flat rows; the service pivots into the trainees x weeks grid.
+    /*Engagement heatmap: completed sessions per trainee per ISO week, last 12 weeks.
+        Returns flat rows; the service pivots into the trainees x weeks grid.*/
     async engagementHeatmap(trainerId) {
         return runQuery(
             `SELECT t.trainee_id,
