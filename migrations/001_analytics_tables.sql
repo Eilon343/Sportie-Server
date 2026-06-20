@@ -1,14 +1,6 @@
--- Migration 001: Trainer analytics tables
--- Engine: TiDB Cloud (MySQL-compatible)
--- Safe to re-run: every table uses IF NOT EXISTS.
--- FKs reference REAL existing column names confirmed against controller SQL:
---   trainees(trainee_id), training_plans(plan_id), exercises(exercise_id), plan_exercises(plan_exercise_id)
--- This file is generated ONLY. Do NOT run it against the live DB automatically.
-
 use sportieDb;
 
 -- 1. workout_sessions: one row per actual (or scheduled) training session.
---    Enables: at-risk (#1), attendance (#2), volume (#4), engagement heatmap (#5).
 create table if not exists workout_sessions (
     session_id     bigint auto_increment primary key,
     trainee_id     int not null,
@@ -25,8 +17,7 @@ create table if not exists workout_sessions (
     index idx_ws_performed         (performed_at)
 );
 
--- 2. logged_sets: one row per actually-performed set.
---    Enables: volume over time (#4), strength leaderboard (#3, est. 1RM).
+--logged_sets: one row per actually-performed set.
 create table if not exists logged_sets (
     logged_set_id    bigint auto_increment primary key,
     session_id       bigint not null,
@@ -43,8 +34,7 @@ create table if not exists logged_sets (
     index idx_ls_exercise (exercise_id)
 );
 
--- 3. trainee_metrics: dated time series of measurable metrics.
---    Enables: body-composition leaderboard (#3).
+--trainee_metrics: dated time series of measurable metrics.
 create table if not exists trainee_metrics (
     metric_id   bigint auto_increment primary key,
     trainee_id  int not null,

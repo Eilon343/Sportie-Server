@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { dbConnection } = require('./db_connection');
+const { dbConnection } = require('../db_connection');
 
 // Self-contained, SAFE verification for the auth refactor. Creates a throwaway trainer
 // via the REAL signup endpoint, then (because signup only makes a users row — the known
