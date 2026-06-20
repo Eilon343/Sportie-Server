@@ -1,4 +1,5 @@
 const { planRepo } = require('../repositories/planRepo');
+const { dbConnection } = require('../db_connection');
 
 // Business shaping for saving a plan: flatten days -> exercise rows, then delegate the
 // atomic persistence to the repo. No SQL here, no req/res here.
@@ -7,27 +8,58 @@ const { planRepo } = require('../repositories/planRepo');
 exports.planService = {
     // Returns the new planId (insertId from the training_plans insert, within the tx).
     async savePlan({ traineeId, goal, daysPerWeek, days }) {
-        // Flatten days -> partial exercise rows WITHOUT plan_id (the repo injects it):
-        // [exercise_id, custom_exercise_name, day_index, sets, reps, rest_seconds].
         const exerciseRows = [];
-        days.forEach((day) => {
-            const dayIndex = day.dayNumber;
+        const connection = await dbConnection.createConnection(); 
+        try {
+            for (const day of days) {
+                const dayIndex = day.dayNumber;
 
-            day.exercises.forEach((exercise) => {
-                const exerciseId = exercise.id || null;
-                const customName = exercise.id ? null : exercise.name;
+                if (day.exercises && Array.isArray(day.exercises)) {
+                    for (const ex of day.exercises) {
+                        const exId = ex.id || null; // null for custom exercises
+                        const customName = ex.id ? null : ex.name; // only set for custom exercises
+                        if (exId) {
+                            //check which exercises already exist in the exercises table, and if not, insert them (to avoid foreign key issues in plan_exercises)
+                            const [existingEx] = await connection.execute(
+                                `SELECT exercise_id FROM exercises WHERE exercise_id = ?`,
+                                [exId]
+                            );
 
-                exerciseRows.push([
-                    exerciseId,
-                    customName,
-                    dayIndex,
-                    exercise.sets,
-                    exercise.reps,
-                    exercise.restSeconds,
-                ]);
-            });
-        });
-
-        return planRepo.savePlanTx({ traineeId, goal, daysPerWeek }, exerciseRows);
-    },
+                            if (existingEx.length === 0) {
+                                //New exercise: Insert the exercise into the exercises table
+                                const insertExQuery = `
+                                INSERT INTO exercises (exercise_id, name, body_part, target, equipment, gif_url, difficulty)
+                                VALUES (?, ?, ?, ?, ?, ?, ?)
+                                `;
+                                await connection.execute(insertExQuery, [
+                                    exId,
+                                    ex.name || 'Custom Exercise',
+                                    ex.bodyPart || 'general',
+                                    ex.target || 'general',
+                                    ex.equipment || 'none',
+                                    ex.gifUrl || '',
+                                    ex.difficulty || 'intermediate',
+                                ]);
+                            }
+                        }
+                        exerciseRows.push([
+                            exId,
+                            customName,
+                            dayIndex,
+                            ex.sets || 3,
+                            ex.reps || 10,
+                            ex.restSeconds || 60
+                        ]);
+                    }
+                }
+            };
+            const planId = await planRepo.savePlanTx({ traineeId, goal, daysPerWeek }, exerciseRows);
+            return planId;
+        } catch (error) {
+            console.error('Error saving plan:', error);
+            throw new Error('Failed to save training plan');
+        } finally {
+            if (connection) connection.end();
+        }
+    }
 };
