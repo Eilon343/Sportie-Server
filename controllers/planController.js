@@ -54,5 +54,40 @@ exports.planController = {
       console.error('Error fetching active plan:', error);
       res.status(500).json({ message: 'Error fetching active plan: ' + error.message });
     }
+  },
+
+  // controllers/planController.js
+
+  async getPlanById(req, res) {
+    try {
+      const { planId } = req.params;
+      if (!planId) return res.status(400).json({ message: 'Parameter "planId" is required' });
+
+      const plan = await planService.getPlanById(planId);
+      if (!plan) return res.status(404).json({ message: 'Plan not found' });
+
+      res.status(200).json(plan);
+    } catch (error) {
+      console.error('Error fetching plan:', error);
+      res.status(500).json({ message: 'Error fetching plan: ' + error.message });
+    }
+  },
+
+  async updatePlan(req, res) {
+    try {
+      const { planId } = req.params;
+      const { goal, daysPerWeek, days } = req.body;
+      if (!planId) return res.status(400).json({ message: 'Parameter "planId" is required' });
+
+      await planService.updatePlan(planId, { goal, daysPerWeek, days });
+
+      res.status(200).json({
+        success: true,
+        message: 'Training plan updated successfully'
+      });
+    } catch (error) {
+      console.error('Error updating plan:', error);
+      res.status(500).json({ message: 'Error updating plan: ' + error.message });
+    }
   }
 };
