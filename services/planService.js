@@ -125,7 +125,7 @@ exports.planService = {
         return { planId, goal, daysPerWeek, createdAt, days: Object.values(daysMap) };
     },
 
-    async updatePlan(planId, { goal, daysPerWeek }, days) {
+    async updatePlan(planId, { goal, daysPerWeek, days }) {
         const exerciseRows = [];
 
         for (const day of days) {
