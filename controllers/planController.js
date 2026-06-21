@@ -39,4 +39,20 @@ exports.planController = {
       res.status(500).json({ message: 'Error saving plan: ' + error.message });
     }
   },
+
+  async getActivePlan(req, res) {
+    try {
+      const { traineeId } = req.params;
+      if (!traineeId) return res.status(400).json({ message: 'Field "traineeId" is required' });
+
+      const plan = await planService.getActivePlan(traineeId);
+      if (!plan) {
+        return res.status(404).json({ message: 'No active plan found for this trainee' });
+      }
+      res.status(200).json(plan);
+    } catch (error) {
+      console.error('Error fetching active plan:', error);
+      res.status(500).json({ message: 'Error fetching active plan: ' + error.message });
+    }
+  }
 };

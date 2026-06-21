@@ -5,5 +5,6 @@ const planRouter = Router();
 
 planRouter.post('/generate', planController.generatePlan);
 planRouter.post('/save', planController.savePlan);
+planRouter.get('/active/:traineeId', planController.getActivePlan);
 
 module.exports = planRouter;
