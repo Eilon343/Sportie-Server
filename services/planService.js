@@ -10,35 +10,43 @@ exports.planService = {
     // Returns the new planId (insertId from the training_plans insert, within the tx).
     async savePlan({ traineeId, goal, daysPerWeek, days }) {
         const exerciseRows = [];
-        const connection = await dbConnection.createConnection(); 
+        const connection = await dbConnection.createConnection();
         try {
             for (const day of days) {
                 const dayIndex = day.dayNumber;
 
                 if (day.exercises && Array.isArray(day.exercises)) {
                     for (const ex of day.exercises) {
-                        const exId = ex.id || null; // null for custom exercises
-                        const customName = ex.id ? null : ex.name; // only set for custom exercises
+                        const exId = ex.id || null;
+                        const customName = ex.id ? null : ex.name;
+
                         if (exId) {
-                            //check which exercises already exist in the exercises table, and if not, insert them (to avoid foreign key issues in plan_exercises)
                             const [existingEx] = await exerciseRepo.findExerciseById(exId);
 
                             if (!existingEx || existingEx.length === 0) {
-                                //New exercise: Insert the exercise into the exercises table
-                                await exerciseRepo.insertExercise(ex);
+                                const safeExercise = {
+                                    exerciseId: ex.id, 
+                                    name: ex.name !== undefined ? ex.name : 'Custom Exercise', 
+                                    bodyPart: ex.bodyPart !== undefined ? ex.bodyPart : (ex.body_part !== undefined ? ex.body_part : 'general'), 
+                                    target: ex.target !== undefined ? ex.target : 'general',
+                                    equipment: ex.equipment !== undefined ? ex.equipment : 'none', 
+                                    gifUrl: ex.gifUrl !== undefined ? ex.gifUrl : (ex.gif_url !== undefined ? ex.gif_url : ''), 
+                                    difficulty: ex.difficulty !== undefined ? ex.difficulty : 'intermediate'
+                                };
+                                await exerciseRepo.insertExercise(safeExercise);
                             }
                         }
                         exerciseRows.push([
                             exId,
                             customName,
                             dayIndex,
-                            ex.sets || 3,
-                            ex.reps || 10,
-                            ex.restSeconds || 60
+                            ex.sets !== undefined ? ex.sets : 3,
+                            ex.reps !== undefined ? ex.reps : 10,
+                            ex.restSeconds !== undefined ? ex.restSeconds : 60
                         ]);
                     }
                 }
-            };
+            }
             const planId = await planRepo.savePlanTx({ traineeId, goal, daysPerWeek }, exerciseRows);
             return planId;
         } catch (error) {
