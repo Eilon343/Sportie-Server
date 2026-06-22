@@ -1,34 +1,24 @@
 const { dbConnection } = require('../db_connection');
 
-// All trainees SQL lives here, parameterized, one method per query. Connection per
-// call via dbConnection.createConnection() — matching the analytics repo pattern.
-
 exports.traineesRepo = {
     async findByTrainerId(trainerId) {
-        const conn = await dbConnection.createConnection();
-        try {
-            const [rows] = await conn.execute('SELECT * FROM trainees WHERE trainer_id = ?', [trainerId]);
-            return rows;
-        } finally {
-            conn.end();
-        }
+        const pool = await dbConnection.createConnection();
+        const [rows] = await pool.execute('SELECT * FROM trainees WHERE trainer_id = ?', [trainerId]);
+        return rows;
     },
 
     async findById(traineeId) {
-        const conn = await dbConnection.createConnection();
-        try {
-            const [rows] = await conn.execute('SELECT * FROM trainees WHERE trainee_id = ?', [traineeId]);
-            return rows;
-        } finally {
-            conn.end();
-        }
+        const pool = await dbConnection.createConnection();
+        const [rows] = await pool.execute('SELECT * FROM trainees WHERE trainee_id = ?', [traineeId]);
+        return rows;
     },
 
     // Owns the whole users+trainees update on ONE connection (mirrors the original
     // controller transaction). Caller passes already-normalized field objects.
     // Returns the trainees-update affectedRows (0 => trainee not found, already rolled back).
     async updateProfileTx(traineeId, userFields, traineeFields) {
-        const conn = await dbConnection.createConnection();
+        const pool = await dbConnection.createConnection();
+        const conn = await pool.getConnection();
         try {
             await conn.beginTransaction();
 
@@ -59,7 +49,7 @@ exports.traineesRepo = {
             await conn.rollback();
             throw error;
         } finally {
-            conn.end();
+            conn.release();
         }
     },
 };

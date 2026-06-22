@@ -3,48 +3,37 @@ const { dbConnection } = require('../db_connection');
 exports.trainersRepo = {
     // Explicit column list (NEVER u.*) so users.password can never leak.
     async findById(trainerId) {
-        const conn = await dbConnection.createConnection();
-        try {
-            const [rows] = await conn.execute(
-                `SELECT t.*, u.email, u.date_of_birth, u.country_code, u.phone_number
-                 FROM trainers t
-                 JOIN users u ON u.user_id = t.trainer_id
-                 WHERE t.trainer_id = ?`,
-                [trainerId]
-            );
-            return rows;
-        } finally {
-            conn.end();
-        }
+        const pool = await dbConnection.createConnection();
+        const [rows] = await pool.execute(
+            `SELECT t.*, u.email, u.date_of_birth, u.country_code, u.phone_number
+             FROM trainers t
+             JOIN users u ON u.user_id = t.trainer_id
+             WHERE t.trainer_id = ?`,
+            [trainerId]
+        );
+        return rows;
     },
 
     async findAll() {
-        const conn = await dbConnection.createConnection();
-        try {
-            const [rows] = await conn.execute('SELECT * FROM trainers');
-            return rows;
-        } finally {
-            conn.end();
-        }
+        const pool = await dbConnection.createConnection();
+        const [rows] = await pool.execute('SELECT * FROM trainers');
+        return rows;
     },
 
     async findMonthlyActivity(trainerId) {
-        const conn = await dbConnection.createConnection();
-        try {
-            const [rows] = await conn.execute(
-                'SELECT month_index, trainee_count FROM trainer_monthly_activity WHERE trainer_id = ? ORDER BY month_index ASC',
-                [trainerId]
-            );
-            return rows;
-        } finally {
-            conn.end();
-        }
+        const pool = await dbConnection.createConnection();
+        const [rows] = await pool.execute(
+            'SELECT month_index, trainee_count FROM trainer_monthly_activity WHERE trainer_id = ? ORDER BY month_index ASC',
+            [trainerId]
+        );
+        return rows;
     },
 
     // users + trainers update in ONE transaction on ONE connection.
     // Returns the trainers-update affectedRows (0 => trainer not found, already rolled back).
     async updateProfileTx(trainerId, userFields, trainerFields) {
-        const conn = await dbConnection.createConnection();
+        const pool = await dbConnection.createConnection();
+        const conn = await pool.getConnection();
         try {
             await conn.beginTransaction();
 
@@ -78,13 +67,14 @@ exports.trainersRepo = {
             await conn.rollback();
             throw error;
         } finally {
-            conn.end();
+            conn.release();
         }
     },
 
     // Ownership check + update, atomic on ONE connection. Returns { found, changed }.
     async updateManagedTraineeTx(trainerId, traineeId, fields) {
-        const conn = await dbConnection.createConnection();
+        const pool = await dbConnection.createConnection();
+        const conn = await pool.getConnection();
         try {
             await conn.beginTransaction();
 
@@ -114,13 +104,14 @@ exports.trainersRepo = {
             await conn.rollback();
             throw error;
         } finally {
-            conn.end();
+            conn.release();
         }
     },
 
     // Check + assign, atomic on ONE connection. Returns 'not_found' | 'already_assigned' | 'assigned'.
     async assignTraineeTx(trainerId, traineeId) {
-        const conn = await dbConnection.createConnection();
+        const pool = await dbConnection.createConnection();
+        const conn = await pool.getConnection();
         try {
             await conn.beginTransaction();
 
@@ -147,29 +138,26 @@ exports.trainersRepo = {
             await conn.rollback();
             throw error;
         } finally {
-            conn.end();
+            conn.release();
         }
     },
 
     // Single statement (inherently atomic). Returns affectedRows.
     async unassignTrainee(trainerId, traineeId) {
-        const conn = await dbConnection.createConnection();
-        try {
-            const [result] = await conn.execute(
-                'UPDATE trainees SET trainer_id = NULL WHERE trainee_id = ? AND trainer_id = ?',
-                [traineeId, trainerId]
-            );
-            return result.affectedRows;
-        } finally {
-            conn.end();
-        }
+        const pool = await dbConnection.createConnection();
+        const [result] = await pool.execute(
+            'UPDATE trainees SET trainer_id = NULL WHERE trainee_id = ? AND trainer_id = ?',
+            [traineeId, trainerId]
+        );
+        return result.affectedRows;
     },
 
     // Multi-step transaction: NULL this trainer's trainees (keep them), then delete the
     // user row (FK cascade removes the trainers row). Trainees survive with trainer_id = NULL.
     // Returns the users-delete affectedRows (0 => trainer not found, already rolled back).
     async deleteTrainerTx(trainerId) {
-        const conn = await dbConnection.createConnection();
+        const pool = await dbConnection.createConnection();
+        const conn = await pool.getConnection();
         try {
             await conn.beginTransaction();
 
@@ -192,7 +180,7 @@ exports.trainersRepo = {
             await conn.rollback();
             throw error;
         } finally {
-            conn.end();
+            conn.release();
         }
     },
 };
