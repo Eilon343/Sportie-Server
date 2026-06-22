@@ -1,13 +1,11 @@
 const { planRepo } = require('../repositories/planRepo');
 const { exerciseRepo } = require('../repositories/exerciseRepo');
-const { dbConnection } = require('../db_connection');
 
 exports.planService = {
     // Saves a brand-new training plan plus all its exercises in one transaction.
     // Returns the new plan's id.
     async savePlan({ traineeId, goal, daysPerWeek, days }) {
         const exerciseRows = [];
-        const connection = await dbConnection.createConnection();
         try {
             for (const day of days) {
                 const dayIndex = day.dayNumber;
@@ -50,8 +48,6 @@ exports.planService = {
         } catch (error) {
             console.error('Error saving plan:', error);
             throw new Error('Failed to save training plan');
-        } finally {
-            if (connection) connection.end();
         }
     },
 

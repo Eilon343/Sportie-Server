@@ -4,50 +4,39 @@ exports.trainersRepo = {
     // Gets one trainer's row plus their user info (email, dob, etc.) by joining trainers and users.
     // Lists columns by hand on purpose so the password column never sneaks out.
     async findById(trainerId) {
-        const conn = await dbConnection.createConnection();
-        try {
-            const [rows] = await conn.execute(
-                `SELECT t.*, u.email, u.date_of_birth, u.country_code, u.phone_number
-                 FROM trainers t
-                 JOIN users u ON u.user_id = t.trainer_id
-                 WHERE t.trainer_id = ?`,
-                [trainerId]
-            );
-            return rows;
-        } finally {
-            conn.end();
-        }
+        const pool = await dbConnection.createConnection();
+        const [rows] = await pool.execute(
+            `SELECT t.*, u.email, u.date_of_birth, u.country_code, u.phone_number
+             FROM trainers t
+             JOIN users u ON u.user_id = t.trainer_id
+             WHERE t.trainer_id = ?`,
+            [trainerId]
+        );
+        return rows;
     },
 
     // Grabs every trainer row from the trainers table.
     async findAll() {
-        const conn = await dbConnection.createConnection();
-        try {
-            const [rows] = await conn.execute('SELECT * FROM trainers');
-            return rows;
-        } finally {
-            conn.end();
-        }
+        const pool = await dbConnection.createConnection();
+        const [rows] = await pool.execute('SELECT * FROM trainers');
+        return rows;
     },
 
     // Reads a trainer's month-by-month trainee counts from the trainer_monthly_activity table.
     async findMonthlyActivity(trainerId) {
-        const conn = await dbConnection.createConnection();
-        try {
-            const [rows] = await conn.execute(
-                'SELECT month_index, trainee_count FROM trainer_monthly_activity WHERE trainer_id = ? ORDER BY month_index ASC',
-                [trainerId]
-            );
-            return rows;
-        } finally {
-            conn.end();
-        }
+        const pool = await dbConnection.createConnection();
+        const [rows] = await pool.execute(
+            'SELECT month_index, trainee_count FROM trainer_monthly_activity WHERE trainer_id = ? ORDER BY month_index ASC',
+            [trainerId]
+        );
+        return rows;
     },
 
     // Updates the trainer's users row and trainers row together in one transaction.
     // Returns how many trainer rows changed (0 means the trainer wasn't found).
     async updateProfileTx(trainerId, userFields, trainerFields) {
-        const conn = await dbConnection.createConnection();
+        const pool = await dbConnection.createConnection();
+        const conn = await pool.getConnection();
         try {
             await conn.beginTransaction();
 
@@ -81,14 +70,15 @@ exports.trainersRepo = {
             await conn.rollback();
             throw error;
         } finally {
-            conn.end();
+            conn.release();
         }
     },
 
     // Makes sure the trainee belongs to this trainer, then updates them, all in one transaction.
     // Returns { found, changed } so the caller knows if it existed and if anything changed.
     async updateManagedTraineeTx(trainerId, traineeId, fields) {
-        const conn = await dbConnection.createConnection();
+        const pool = await dbConnection.createConnection();
+        const conn = await pool.getConnection();
         try {
             await conn.beginTransaction();
 
@@ -118,14 +108,15 @@ exports.trainersRepo = {
             await conn.rollback();
             throw error;
         } finally {
-            conn.end();
+            conn.release();
         }
     },
 
     // Links a free trainee to a trainer, in one transaction. Tells you 'not_found',
     // 'already_assigned', or 'assigned' depending on what happened.
     async assignTraineeTx(trainerId, traineeId) {
-        const conn = await dbConnection.createConnection();
+        const pool = await dbConnection.createConnection();
+        const conn = await pool.getConnection();
         try {
             await conn.beginTransaction();
 
@@ -152,30 +143,27 @@ exports.trainersRepo = {
             await conn.rollback();
             throw error;
         } finally {
-            conn.end();
+            conn.release();
         }
     },
 
     // Removes a trainee from a trainer by setting their trainer_id back to NULL.
     // Returns how many rows changed.
     async unassignTrainee(trainerId, traineeId) {
-        const conn = await dbConnection.createConnection();
-        try {
-            const [result] = await conn.execute(
-                'UPDATE trainees SET trainer_id = NULL WHERE trainee_id = ? AND trainer_id = ?',
-                [traineeId, trainerId]
-            );
-            return result.affectedRows;
-        } finally {
-            conn.end();
-        }
+        const pool = await dbConnection.createConnection();
+        const [result] = await pool.execute(
+            'UPDATE trainees SET trainer_id = NULL WHERE trainee_id = ? AND trainer_id = ?',
+            [traineeId, trainerId]
+        );
+        return result.affectedRows;
     },
 
     // Deletes a trainer but keeps their trainees: first unhooks the trainees (trainer_id = NULL),
     // then deletes the user row (which cascades to the trainers row). All in one transaction.
     // Returns how many user rows were deleted (0 means the trainer wasn't found).
     async deleteTrainerTx(trainerId) {
-        const conn = await dbConnection.createConnection();
+        const pool = await dbConnection.createConnection();
+        const conn = await pool.getConnection();
         try {
             await conn.beginTransaction();
 
@@ -198,7 +186,7 @@ exports.trainersRepo = {
             await conn.rollback();
             throw error;
         } finally {
-            conn.end();
+            conn.release();
         }
     },
 };

@@ -1,34 +1,28 @@
 const { dbConnection } = require('../db_connection');
 
-// All the trainee database stuff. Each method grabs its own connection and runs one query.
+// All trainees SQL lives here, parameterized, one method per query. Connection per
+// call via dbConnection.createConnection() — matching the analytics repo pattern.
 
 exports.traineesRepo = {
     // Gets all trainees belonging to a given trainer from the trainees table.
     async findByTrainerId(trainerId) {
-        const conn = await dbConnection.createConnection();
-        try {
-            const [rows] = await conn.execute('SELECT * FROM trainees WHERE trainer_id = ?', [trainerId]);
-            return rows;
-        } finally {
-            conn.end();
-        }
+        const pool = await dbConnection.createConnection();
+        const [rows] = await pool.execute('SELECT * FROM trainees WHERE trainer_id = ?', [trainerId]);
+        return rows;
     },
 
     // Gets a single trainee's row from the trainees table by id.
     async findById(traineeId) {
-        const conn = await dbConnection.createConnection();
-        try {
-            const [rows] = await conn.execute('SELECT * FROM trainees WHERE trainee_id = ?', [traineeId]);
-            return rows;
-        } finally {
-            conn.end();
-        }
+        const pool = await dbConnection.createConnection();
+        const [rows] = await pool.execute('SELECT * FROM trainees WHERE trainee_id = ?', [traineeId]);
+        return rows;
     },
 
     // Updates both the users row and the trainees row together in one transaction.
     // Returns how many trainee rows changed (0 means the trainee wasn't found).
     async updateProfileTx(traineeId, userFields, traineeFields) {
-        const conn = await dbConnection.createConnection();
+        const pool = await dbConnection.createConnection();
+        const conn = await pool.getConnection();
         try {
             await conn.beginTransaction();
 
@@ -59,7 +53,7 @@ exports.traineesRepo = {
             await conn.rollback();
             throw error;
         } finally {
-            conn.end();
+            conn.release();
         }
     },
 };

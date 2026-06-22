@@ -5,22 +5,14 @@ const { dbConnection } = require('../db_connection');
 exports.usersRepo = {
     // Reads a user's stored password hash from the users table. Returns the row or null.
     async findPasswordHash(userId) {
-        const conn = await dbConnection.createConnection();
-        try {
-            const [rows] = await conn.execute('SELECT password FROM users WHERE user_id = ?', [userId]);
-            return rows.length ? rows[0] : null;
-        } finally {
-            conn.end();
-        }
+        const pool = await dbConnection.createConnection();
+        const [rows] = await pool.execute('SELECT password FROM users WHERE user_id = ?', [userId]);
+        return rows.length ? rows[0] : null;
     },
 
     // Saves a new password hash for a user into the users table.
     async updatePasswordHash(userId, hash) {
-        const conn = await dbConnection.createConnection();
-        try {
-            await conn.execute('UPDATE users SET password = ? WHERE user_id = ?', [hash, userId]);
-        } finally {
-            conn.end();
-        }
+        const pool = await dbConnection.createConnection();
+        await pool.execute('UPDATE users SET password = ? WHERE user_id = ?', [hash, userId]);
     },
 };

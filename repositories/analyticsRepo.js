@@ -1,16 +1,15 @@
 const { dbConnection } = require('../db_connection');
 
-// All the analytics queries live here. Each one opens its own connection and runs.
+// All SQL for the analytics feature lives here. One async method per query,
+// parameterized with mysql2 placeholders (no string interpolation of inputs).
+// Each method opens and closes its own connection, matching the existing
+// per-handler connection pattern used across the controllers.
 
 // Little helper that runs a SQL query and hands back the rows, then closes the connection.
 async function runQuery(sql, params = []) {
-    const conn = await dbConnection.createConnection();
-    try {
-        const [rows] = await conn.execute(sql, params);
-        return rows;
-    } finally {
-        conn.end();
-    }
+    const pool = await dbConnection.createConnection();
+    const [rows] = await pool.execute(sql, params);
+    return rows;
 }
 
 exports.analyticsRepo = {
