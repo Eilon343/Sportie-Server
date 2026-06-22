@@ -1,13 +1,7 @@
 const { dbConnection } = require('../db_connection');
 
-// All training-plan persistence SQL lives here. Parameterized.
-
 exports.planRepo = {
-    // Saves a plan and its exercises ATOMICALLY on ONE connection in ONE transaction:
-    //   INSERT training_plans -> capture insertId -> bulk INSERT plan_exercises -> commit.
-    // exerciseRows are partial rows WITHOUT plan_id (built by the service); this method
-    // prepends the new planId to each. Any failure rolls BOTH inserts back. Returns planId.
-    async savePlanTx({ traineeId, goal, daysPerWeek }, exerciseRows) {
+    async savePlan({ traineeId, goal, daysPerWeek }, exerciseRows) {
         const connection = await dbConnection.createConnection();
         try {
             await connection.beginTransaction();

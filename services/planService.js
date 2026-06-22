@@ -1,10 +1,6 @@
 const { planRepo } = require('../repositories/planRepo');
 const { dbConnection } = require('../db_connection');
 
-// Business shaping for saving a plan: flatten days -> exercise rows, then delegate the
-// atomic persistence to the repo. No SQL here, no req/res here.
-// (Plan GENERATION stays in planGeneratorService.js — untouched.)
-
 exports.planService = {
     // Returns the new planId (insertId from the training_plans insert, within the tx).
     async savePlan({ traineeId, goal, daysPerWeek, days }) {
@@ -53,7 +49,7 @@ exports.planService = {
                     }
                 }
             };
-            const planId = await planRepo.savePlanTx({ traineeId, goal, daysPerWeek }, exerciseRows);
+            const planId = await planRepo.savePlan({ traineeId, goal, daysPerWeek }, exerciseRows);
             return planId;
         } catch (error) {
             console.error('Error saving plan:', error);
