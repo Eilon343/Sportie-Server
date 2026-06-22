@@ -8,6 +8,7 @@ const { dbConnection } = require('../db_connection');
 
 const planId = process.argv[2] || 60005;
 
+// Looks up a saved plan and its exercises and prints what's in the DB.
 async function verify() {
     const conn = await dbConnection.createConnection();
     try {

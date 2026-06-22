@@ -7,6 +7,7 @@ const HEADERS = {
   'Content-Type': 'application/json',
 };
 
+// Fetches exercises from the ExerciseDB API, optionally filtered by body part, target, or equipment.
 async function getExercises({ bodyPart, target, equipment, limit = 20, offset = 0 } = {}) {
   let path = '/exercises';
   if (bodyPart) path = `/exercises/bodyPart/${bodyPart}`;
@@ -16,25 +17,28 @@ async function getExercises({ bodyPart, target, equipment, limit = 20, offset = 
   return getJSON(buildUrl(BASE_URL, path, { limit, offset }), HEADERS);
 }
 
-// One exercise by id
+// Grabs a single exercise by its id.
 async function getExerciseById(id) {
   return getJSON(buildUrl(BASE_URL, `/exercises/exercise/${id}`), HEADERS);
 }
 
-// Search exercises by name
+// Searches exercises by name.
 async function searchExercisesByName(name, { limit = 20, offset = 0 } = {}) {
   return getJSON(buildUrl(BASE_URL, `/exercises/name/${name}`, { limit, offset }), HEADERS);
 }
 
-// Lists for building dropdowns / filters in the trainer UI
+// The next three return simple lists used to fill dropdowns / filters in the trainer UI.
+// All available body parts.
 async function getBodyPartList() {
   return getJSON(buildUrl(BASE_URL, '/exercises/bodyPartList'), HEADERS);
 }
 
+// All available target muscles.
 async function getTargetList() {
   return getJSON(buildUrl(BASE_URL, '/exercises/targetList'), HEADERS);
 }
 
+// All available equipment types.
 async function getEquipmentList() {
   return getJSON(buildUrl(BASE_URL, '/exercises/equipmentList'), HEADERS);
 }

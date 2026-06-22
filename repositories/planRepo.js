@@ -1,6 +1,7 @@
 const { dbConnection } = require('../db_connection');
 
 exports.planRepo = {
+    // Saves a new training plan plus all its exercises in one transaction. Returns the new plan id.
     async savePlan({ traineeId, goal, daysPerWeek }, exerciseRows) {
         const connection = await dbConnection.createConnection();
         try {
@@ -32,10 +33,10 @@ exports.planRepo = {
         }
     },
 
+    // Gets a trainee's current active plan and all its exercises (joined from plan_exercises and exercises).
     async getActivePlanByTraineeId(traineeId) {
         const connection = await dbConnection.createConnection();
         try {
-            // This query fetches the latest active plan for the trainee, along with its exercises.
             const query = `
                   SELECT
                   tp.plan_id,
@@ -69,6 +70,7 @@ exports.planRepo = {
         }
     },
 
+    // Pulls one plan and its exercises by plan id (joins plan_exercises and exercises).
     async getPlanById(planId) {
         const connection = await dbConnection.createConnection();
         try {
@@ -104,6 +106,7 @@ exports.planRepo = {
         }
     },
 
+    // Updates a plan's basics, then wipes and re-adds its exercises, all in one transaction.
     async updatePlanTx(planId, { goal, daysPerWeek }, exerciseRows) {
         const connection = await dbConnection.createConnection();
         try {

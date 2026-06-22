@@ -3,7 +3,8 @@ const { exerciseRepo } = require('../repositories/exerciseRepo');
 const { dbConnection } = require('../db_connection');
 
 exports.planService = {
-    // Returns the new planId (insertId from the training_plans insert, within the tx).
+    // Saves a brand-new training plan plus all its exercises in one transaction.
+    // Returns the new plan's id.
     async savePlan({ traineeId, goal, daysPerWeek, days }) {
         const exerciseRows = [];
         const connection = await dbConnection.createConnection();
@@ -19,6 +20,7 @@ exports.planService = {
                         if (exId) {
                             const [existingEx] = await exerciseRepo.findExerciseById(exId);
 
+                            // First time we see this API exercise, store it so the plan can reference it.
                             if (!existingEx || existingEx.length === 0) {
                                 const safeExercise = {
                                     exerciseId: ex.id, 
@@ -53,6 +55,7 @@ exports.planService = {
         }
     },
 
+    // Gets a trainee's current active plan and rebuilds it into a nested days/exercises shape.
     async getActivePlan(traineeId) {
         const rows = await planRepo.getActivePlanByTraineeId(traineeId);
 
@@ -92,6 +95,7 @@ exports.planService = {
         };
     },
 
+    // Same as getActivePlan but looks a plan up directly by its id.
     async getPlanById(planId) {
         const rows = await planRepo.getPlanById(planId);
         if (!rows || rows.length === 0) return null;
@@ -121,6 +125,7 @@ exports.planService = {
         return { planId, goal, daysPerWeek, createdAt, days: Object.values(daysMap) };
     },
 
+    // Replaces an existing plan's details and exercises, adding any new API exercises first.
     async updatePlan(planId, { goal, daysPerWeek, days }) {
         const exerciseRows = [];
 
@@ -134,6 +139,7 @@ exports.planService = {
 
                     if (exId) {
                         const existingEx = await exerciseRepo.findExerciseById(exId);
+                        // First time we see this API exercise, store it so the plan can reference it.
                         if (!existingEx || existingEx.length === 0) {
                             const safeExercise = {
                                 exerciseId: ex.id,

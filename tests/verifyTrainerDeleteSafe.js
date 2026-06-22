@@ -11,6 +11,7 @@ const BASE = 'http://localhost:3000';
 const FORBIDDEN_TRAINER_IDS = [101, 102, 103];
 const STAMP = Date.now(); // unique suffix so re-runs don't collide on the unique email
 
+// Makes a test trainer+trainee, deletes the trainer via the API, and checks the trainee survives unassigned.
 async function main() {
     const conn = await dbConnection.createConnection();
     let testTrainerId = null;

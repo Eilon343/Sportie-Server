@@ -1,9 +1,7 @@
 const { traineesService } = require('../services/traineesService');
 
-// req/res only: parse input, call the service, map results/errors to HTTP responses.
-// Response shapes are unchanged: list -> array, by-id -> single row, updates -> { message }.
-
 exports.traineesController = {
+    // Gets all the trainees that belong to one trainer. Used by the dashboard.
     async getTraineesByTrainer(req, res) {
         try {
             const rows = await traineesService.getTraineesByTrainer(req.params.trainerId);
@@ -17,6 +15,7 @@ exports.traineesController = {
         }
     },
 
+    // Gets a single trainee by id, or 404 if not found.
     async getTraineeById(req, res) {
         try {
             const trainee = await traineesService.getTraineeById(req.params.traineeId);
@@ -30,8 +29,8 @@ exports.traineesController = {
         }
     },
 
-    // TRAINEE edits their OWN profile (future phone app).
-    // Allowed: contact info + name, goal, avatar. NOT status/progress/trainer_id/weight.
+    // Lets a trainee edit their own profile. Only safe fields like name, contact, goal, avatar
+    // are allowed here, not status/progress/trainer/weight.
     async updateOwnProfile(req, res) {
         try {
             const updated = await traineesService.updateOwnProfile(req.params.traineeId, req.body);

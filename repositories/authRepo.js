@@ -1,9 +1,10 @@
 const { dbConnection } = require('../db_connection');
 
-// Auth SQL only, parameterized. findUserByEmail returns the FULL user row (incl. the
-// password hash) to the SERVICE for bcrypt — the service must keep it out of responses.
+// Login/signup database stuff. Heads up: findUserByEmail returns the whole user row
+// including the password hash, so the service has to keep that out of any response.
 
 exports.authRepo = {
+    // Adds a new user (email, password hash, role) into the users table.
     async insertUser(email, hashedPassword, role) {
         const conn = await dbConnection.createConnection();
         try {
@@ -16,7 +17,7 @@ exports.authRepo = {
         }
     },
 
-    // Full user row (user_id, email, password hash, role, ...) or null.
+    // Looks up a user in the users table by email. Returns the full row or null.
     async findUserByEmail(email) {
         const conn = await dbConnection.createConnection();
         try {
@@ -27,7 +28,7 @@ exports.authRepo = {
         }
     },
 
-    // The trainers-table row (no password column) or null.
+    // Gets one trainer's row from the trainers table by id. Returns the row or null.
     async findTrainerById(trainerId) {
         const conn = await dbConnection.createConnection();
         try {

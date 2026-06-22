@@ -13,6 +13,7 @@ const {
 } = require('../services/mealService');
 
 exports.mealController = {
+  // Searches meals by a query string (the "q" param is required).
   async searchMeals(req, res) {
     try {
       const { q } = req.query;
@@ -27,6 +28,7 @@ exports.mealController = {
     }
   },
 
+  // Gets meals whose name starts with a given letter.
   async searchByFirstLetter(req, res) {
     try {
       const meals = await searchByFirstLetter(req.params.letter);
@@ -37,6 +39,7 @@ exports.mealController = {
     }
   },
 
+  // Gets a single meal by its id, or 404 if it doesn't exist.
   async getMealById(req, res) {
     try {
       const meal = await getMealById(req.params.id);
@@ -50,6 +53,7 @@ exports.mealController = {
     }
   },
 
+  // Picks a random meal, handy for suggestions.
   async getRandomMeal(req, res) {
     try {
       const meal = await getRandomMeal();
@@ -60,6 +64,7 @@ exports.mealController = {
     }
   },
 
+  // Gets all the meal categories (with their details).
   async getCategories(req, res) {
     try {
       const categories = await getCategories();
@@ -70,6 +75,7 @@ exports.mealController = {
     }
   },
 
+  // Gets meals that belong to a given category.
   async filterByCategory(req, res) {
     try {
       const meals = await filterByCategory(req.params.category);
@@ -80,6 +86,7 @@ exports.mealController = {
     }
   },
 
+  // Gets meals from a given area/cuisine.
   async filterByArea(req, res) {
     try {
       const meals = await filterByArea(req.params.area);
@@ -90,6 +97,7 @@ exports.mealController = {
     }
   },
 
+  // Gets meals that use a given ingredient.
   async filterByIngredient(req, res) {
     try {
       const meals = await filterByIngredient(req.params.ingredient);
@@ -100,6 +108,7 @@ exports.mealController = {
     }
   },
 
+  // Returns just the category names, for dropdowns.
   async listCategoryNames(req, res) {
     try {
       const names = await listCategoryNames();
@@ -110,6 +119,7 @@ exports.mealController = {
     }
   },
 
+  // Returns the list of areas/cuisines, for dropdowns.
   async listAreas(req, res) {
     try {
       const areas = await listAreas();
@@ -120,6 +130,7 @@ exports.mealController = {
     }
   },
 
+  // Returns the list of ingredients, for dropdowns.
   async listIngredients(req, res) {
     try {
       const ingredients = await listIngredients();

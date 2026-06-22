@@ -1,9 +1,9 @@
 const { dbConnection } = require('../db_connection');
 
-// All trainees SQL lives here, parameterized, one method per query. Connection per
-// call via dbConnection.createConnection() — matching the analytics repo pattern.
+// All the trainee database stuff. Each method grabs its own connection and runs one query.
 
 exports.traineesRepo = {
+    // Gets all trainees belonging to a given trainer from the trainees table.
     async findByTrainerId(trainerId) {
         const conn = await dbConnection.createConnection();
         try {
@@ -14,6 +14,7 @@ exports.traineesRepo = {
         }
     },
 
+    // Gets a single trainee's row from the trainees table by id.
     async findById(traineeId) {
         const conn = await dbConnection.createConnection();
         try {
@@ -24,9 +25,8 @@ exports.traineesRepo = {
         }
     },
 
-    // Owns the whole users+trainees update on ONE connection (mirrors the original
-    // controller transaction). Caller passes already-normalized field objects.
-    // Returns the trainees-update affectedRows (0 => trainee not found, already rolled back).
+    // Updates both the users row and the trainees row together in one transaction.
+    // Returns how many trainee rows changed (0 means the trainee wasn't found).
     async updateProfileTx(traineeId, userFields, traineeFields) {
         const conn = await dbConnection.createConnection();
         try {

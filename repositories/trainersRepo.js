@@ -1,7 +1,8 @@
 const { dbConnection } = require('../db_connection');
 
 exports.trainersRepo = {
-    // Explicit column list (NEVER u.*) so users.password can never leak.
+    // Gets one trainer's row plus their user info (email, dob, etc.) by joining trainers and users.
+    // Lists columns by hand on purpose so the password column never sneaks out.
     async findById(trainerId) {
         const conn = await dbConnection.createConnection();
         try {
@@ -18,6 +19,7 @@ exports.trainersRepo = {
         }
     },
 
+    // Grabs every trainer row from the trainers table.
     async findAll() {
         const conn = await dbConnection.createConnection();
         try {
@@ -28,6 +30,7 @@ exports.trainersRepo = {
         }
     },
 
+    // Reads a trainer's month-by-month trainee counts from the trainer_monthly_activity table.
     async findMonthlyActivity(trainerId) {
         const conn = await dbConnection.createConnection();
         try {
@@ -41,8 +44,8 @@ exports.trainersRepo = {
         }
     },
 
-    // users + trainers update in ONE transaction on ONE connection.
-    // Returns the trainers-update affectedRows (0 => trainer not found, already rolled back).
+    // Updates the trainer's users row and trainers row together in one transaction.
+    // Returns how many trainer rows changed (0 means the trainer wasn't found).
     async updateProfileTx(trainerId, userFields, trainerFields) {
         const conn = await dbConnection.createConnection();
         try {
@@ -82,7 +85,8 @@ exports.trainersRepo = {
         }
     },
 
-    // Ownership check + update, atomic on ONE connection. Returns { found, changed }.
+    // Makes sure the trainee belongs to this trainer, then updates them, all in one transaction.
+    // Returns { found, changed } so the caller knows if it existed and if anything changed.
     async updateManagedTraineeTx(trainerId, traineeId, fields) {
         const conn = await dbConnection.createConnection();
         try {
@@ -118,7 +122,8 @@ exports.trainersRepo = {
         }
     },
 
-    // Check + assign, atomic on ONE connection. Returns 'not_found' | 'already_assigned' | 'assigned'.
+    // Links a free trainee to a trainer, in one transaction. Tells you 'not_found',
+    // 'already_assigned', or 'assigned' depending on what happened.
     async assignTraineeTx(trainerId, traineeId) {
         const conn = await dbConnection.createConnection();
         try {
@@ -151,7 +156,8 @@ exports.trainersRepo = {
         }
     },
 
-    // Single statement (inherently atomic). Returns affectedRows.
+    // Removes a trainee from a trainer by setting their trainer_id back to NULL.
+    // Returns how many rows changed.
     async unassignTrainee(trainerId, traineeId) {
         const conn = await dbConnection.createConnection();
         try {
@@ -165,9 +171,9 @@ exports.trainersRepo = {
         }
     },
 
-    // Multi-step transaction: NULL this trainer's trainees (keep them), then delete the
-    // user row (FK cascade removes the trainers row). Trainees survive with trainer_id = NULL.
-    // Returns the users-delete affectedRows (0 => trainer not found, already rolled back).
+    // Deletes a trainer but keeps their trainees: first unhooks the trainees (trainer_id = NULL),
+    // then deletes the user row (which cascades to the trainers row). All in one transaction.
+    // Returns how many user rows were deleted (0 means the trainer wasn't found).
     async deleteTrainerTx(trainerId) {
         const conn = await dbConnection.createConnection();
         try {

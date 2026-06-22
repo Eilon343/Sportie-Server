@@ -2,6 +2,7 @@ const { dbConnection } = require('../db_connection');
 
 
 exports.exerciseRepo = {
+    // Checks if an exercise exists in the exercises table by its id.
     async findExerciseById(exerciseId) {
         const conn = await dbConnection.createConnection();
         try {
@@ -18,6 +19,7 @@ exports.exerciseRepo = {
         }
     },
 
+    // Adds a new exercise row to the exercises table, filling in defaults when fields are missing.
     async insertExercise(exercise) {
         const conn = await dbConnection.createConnection();
         try {

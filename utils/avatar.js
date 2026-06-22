@@ -1,5 +1,6 @@
 const MAX_AVATAR_CHARS = 150000;
 
+// Checks an avatar string is a valid, not-too-big image. Returns an error message or null if it's fine.
 function validateAvatar(avatar_url) {
     if (avatar_url == null || avatar_url === '') return null; // not provided or clearing
     if (typeof avatar_url !== 'string' || !avatar_url.startsWith('data:image/')) {

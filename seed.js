@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt');
 const data = require('./ListOfTrainees.json');
 const { dbConnection } = require('./db_connection');
 
+// Wipes the user/trainer/trainee tables and refills them from ListOfTrainees.json.
 async function seedDb() {
     const connection = await dbConnection.createConnection({ multipleStatements: true });
 

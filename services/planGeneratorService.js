@@ -8,6 +8,7 @@ const GOAL_SCHEMES = {
 
 const DEFAULT_BODY_PARTS = ['chest', 'back', 'upper legs', 'shoulders'];
 
+// Spreads the body parts across the training days, one focus part per day (looping if needed).
 function buildSplit(bodyParts, daysPerWeek) {
   const split = Array.from({ length: daysPerWeek }, () => []);
   for (let i = 0; i < daysPerWeek; i++) {
@@ -17,6 +18,7 @@ function buildSplit(bodyParts, daysPerWeek) {
   return split;
 }
 
+// Auto-builds a full workout plan: picks sets/reps from the goal, then pulls exercises per day.
 async function generatePlan({ goal, daysPerWeek = 3, bodyParts, exercisesPerDay = 4 } = {}) {
   const scheme = GOAL_SCHEMES[goal];
   if (!scheme) {

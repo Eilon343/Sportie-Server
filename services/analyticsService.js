@@ -3,7 +3,7 @@ const { analyticsRepo } = require('../repositories/analyticsRepo');
 // Business rules + response shaping. SQL does the aggregation; this layer only
 // does thresholds, bucketing, week formatting and DTO shaping.
 
-// Format a MySQL YEARWEEK(date, 3) integer (e.g. 202624) into an ISO label "2026-W24".
+// Turns a MySQL YEARWEEK number like 202624 into a readable "2026-W24" label.
 function formatIsoWeek(yearweek) {
     const s = String(yearweek);
     const year = s.slice(0, 4);
@@ -12,7 +12,7 @@ function formatIsoWeek(yearweek) {
 }
 
 exports.analyticsService = {
-    // #1
+    // Lists trainees who haven't trained in a while so the trainer can follow up.
     async getAtRisk(trainerId) {
         const rows = await analyticsRepo.atRisk(trainerId);
         return rows.map((r) => ({
@@ -23,7 +23,7 @@ exports.analyticsService = {
         }));
     },
 
-    // #2 — bucket each trainee by attendance %, return COUNT of trainees per bucket.
+    // Groups trainees into attendance buckets (<50%, 50-80%, 80+%) and counts how many fall in each.
     async getAttendanceDistribution(trainerId) {
         const rows = await analyticsRepo.attendanceRaw(trainerId);
         const buckets = { '<50': 0, '50-80': 0, '80+': 0 };
@@ -49,7 +49,7 @@ exports.analyticsService = {
         };
     },
 
-    // #3 — metric toggle picks the repo method; shaping is identical for both.
+    // Ranks trainees by progress, either strength or body weight depending on the metric asked for.
     async getLeaderboard(trainerId, metric) {
         const normalized = metric === 'strength' ? 'strength' : 'body_weight';
         const rows = normalized === 'strength'
@@ -69,7 +69,7 @@ exports.analyticsService = {
         };
     },
 
-    // #4
+    // Gives total training volume per week so you can chart it over time.
     async getVolumeOverTime(trainerId) {
         const rows = await analyticsRepo.volumeOverTime(trainerId);
         return rows.map((r) => ({
@@ -78,7 +78,7 @@ exports.analyticsService = {
         }));
     },
 
-    // #5 — pivot flat rows into a grid: every roster trainee is a row; weeks are columns.
+    // Builds a heatmap grid (one row per trainee, one column per week) of session counts.
     async getEngagementHeatmap(trainerId) {
         const [roster, rows] = await Promise.all([
             analyticsRepo.listTrainees(trainerId),

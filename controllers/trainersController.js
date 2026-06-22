@@ -1,9 +1,7 @@
 const { trainersService } = require('../services/trainersService');
 
-// req/res only: parse input, call the service, map results/errors to HTTP responses.
-// Tagged service errors (err.status) become JSON {message}; everything else is a 500.
-
 exports.trainersController = {
+    // Gets a single trainer by id, or 404 if not found.
     async getTrainerById(req, res) {
         try {
             const trainer = await trainersService.getTrainerById(req.params.trainerId);
@@ -17,6 +15,7 @@ exports.trainersController = {
         }
     },
 
+    // Gets the full list of trainers.
     async getAllTrainers(req, res) {
         try {
             const rows = await trainersService.getAllTrainers();
@@ -27,6 +26,7 @@ exports.trainersController = {
         }
     },
 
+    // Gets the trainer's trainees who were active this month.
     async getMonthlyActiveTrainees(req, res) {
         try {
             const rows = await trainersService.getMonthlyActiveTrainees(req.params.trainerId);
@@ -37,7 +37,7 @@ exports.trainersController = {
         }
     },
 
-    // TRAINER edits their OWN profile (users + trainers).
+    // Lets a trainer update their own profile info.
     async updateOwnProfile(req, res) {
         try {
             const updated = await trainersService.updateOwnProfile(req.params.trainerId, req.body);
@@ -52,7 +52,7 @@ exports.trainersController = {
         }
     },
 
-    // TRAINER edits a managed TRAINEE — limited fields only.
+    // Lets a trainer edit one of their trainees, but only certain allowed fields.
     async updateManagedTrainee(req, res) {
         try {
             const changed = await trainersService.updateManagedTrainee(
@@ -66,7 +66,7 @@ exports.trainersController = {
         }
     },
 
-    // Assign an existing, unassigned trainee to this trainer.
+    // Attaches an existing unassigned trainee to this trainer.
     async assignTrainee(req, res) {
         const { traineeId } = req.body;
         if (!traineeId) return res.status(400).json({ message: 'traineeId is required' });
@@ -81,7 +81,7 @@ exports.trainersController = {
         }
     },
 
-    // Unassign a trainee from this trainer (keeps the trainee's account).
+    // Removes a trainee from this trainer but keeps the trainee's account.
     async unassignTrainee(req, res) {
         try {
             await trainersService.unassignTrainee(req.params.trainerId, req.params.traineeId);
@@ -93,7 +93,7 @@ exports.trainersController = {
         }
     },
 
-    // Delete a trainer: unassign their trainees, then delete (cascade removes trainer + user rows).
+    // Deletes a trainer. Their trainees get unassigned first, then the trainer and user rows are removed.
     async deleteTrainer(req, res) {
         try {
             await trainersService.deleteTrainer(req.params.trainerId);

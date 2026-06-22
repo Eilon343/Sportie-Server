@@ -1,5 +1,7 @@
 const { XMLHttpRequest } = require('xmlhttprequest');
 
+// Glues a base URL, path, and query params together into one URL string.
+// Skips params that are undefined/null/empty so they don't end up in the query.
 function buildUrl(baseURL, path, params) {
     let url = baseURL + path;
     if (params) {
@@ -12,6 +14,7 @@ function buildUrl(baseURL, path, params) {
     return url;
 }
 
+// Does a GET request and resolves with the parsed JSON. Rejects on bad status or invalid JSON.
 function getJSON(url, headers = {}) {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();

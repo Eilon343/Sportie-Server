@@ -17,6 +17,7 @@ const OLD_PASSWORD = 'oldPass123';
 const NEW_PASSWORD = 'newPass456';
 
 let pass = true;
+// Logs a PASS/FAIL line and flips the overall result if something failed.
 function check(ok, label) {
     console.log(`${ok ? 'PASS' : 'FAIL'}  ${label}`);
     if (!ok) pass = false;
@@ -28,6 +29,7 @@ function assertNoPasswordField(body, label) {
     check(!leaked, `${label}: no password/hash field in response body`);
 }
 
+// Calls the change-password endpoint and returns the status + parsed body.
 async function putPassword(userId, payload) {
     const res = await fetch(`${BASE}/api/users/${userId}/password`, {
         method: 'PUT',
@@ -40,6 +42,7 @@ async function putPassword(userId, payload) {
     return { status: res.status, body };
 }
 
+// Tries wrong/mismatched/correct password changes and confirms the stored hash actually updated.
 async function main() {
     const conn = await dbConnection.createConnection();
     let userId = null;

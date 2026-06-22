@@ -15,11 +15,13 @@ const EMAIL = `_authtest_${STAMP}@test.local`;
 const PASSWORD = 'authPass123';
 
 let pass = true;
+// Logs a PASS/FAIL line and flips the overall result if something failed.
 function check(ok, label) {
     console.log(`${ok ? 'PASS' : 'FAIL'}  ${label}`);
     if (!ok) pass = false;
 }
 
+// Sends a POST to the running server and returns the status + parsed body.
 async function post(path, payload) {
     const res = await fetch(`${BASE}${path}`, {
         method: 'POST',
@@ -32,11 +34,13 @@ async function post(path, payload) {
     return { status: res.status, body, text };
 }
 
+// Fails the test if a response ever leaks a password or hash field.
 function assertNoSecret(text, label) {
     const leaked = /"password"|"hash"/i.test(text);
     check(!leaked, `${label}: no password/hash field anywhere in response`);
 }
 
+// Walks through signup/login and checks each step behaves and stays secret.
 async function main() {
     const conn = await dbConnection.createConnection();
     let userId = null;

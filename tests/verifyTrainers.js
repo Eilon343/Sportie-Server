@@ -12,11 +12,13 @@ const trainerId = process.argv[2] || 1;
 
 let passed = 0;
 let failed = 0;
+// Logs a PASS/FAIL line and bumps the pass/fail counters.
 function check(ok, label) {
     console.log(`${ok ? 'PASS' : 'FAIL'}  ${label}`);
     if (ok) passed++; else failed++;
 }
 
+// Hits the trainer endpoints and checks the responses look right (and don't leak passwords).
 async function httpChecks() {
     console.log('\n=== HTTP checks ===');
 
@@ -60,6 +62,7 @@ async function httpChecks() {
     }
 }
 
+// Prints trainer ids and their trainee counts so you can pick one for the delete test.
 async function sqlChecks(conn) {
     console.log('\n=== SQL checks (read-only) ===');
 
@@ -74,6 +77,7 @@ async function sqlChecks(conn) {
     console.table(counts);
 }
 
+// Runs the HTTP and SQL checks, then prints a summary.
 async function main() {
     await httpChecks();
 

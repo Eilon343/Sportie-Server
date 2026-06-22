@@ -35,6 +35,7 @@ app.use('/api/plans', planRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/analytics', analyticsRouter);
 
+// Simple health check so you can tell the server is up.
 app.get('/', (req, res) => {
   res.send('Server is running!');
 });

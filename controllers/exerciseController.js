@@ -8,6 +8,7 @@ const {
 } = require('../services/exerciseService');
 
 exports.exerciseController = {
+  // Gets a list of exercises, optionally filtered by body part, target, or equipment.
   async getExercises(req, res) {
     try {
       const { bodyPart, target, equipment, limit, offset } = req.query;
@@ -19,6 +20,7 @@ exports.exerciseController = {
     }
   },
 
+  // Searches exercises by name.
   async searchExercisesByName(req, res) {
     try {
       const { limit, offset } = req.query;
@@ -30,6 +32,7 @@ exports.exerciseController = {
     }
   },
 
+  // Returns all the body part options you can filter by.
   async getBodyPartList(req, res) {
     try {
       const data = await getBodyPartList();
@@ -40,6 +43,7 @@ exports.exerciseController = {
     }
   },
 
+  // Returns all the target muscle options you can filter by.
   async getTargetList(req, res) {
     try {
       const data = await getTargetList();
@@ -50,6 +54,7 @@ exports.exerciseController = {
     }
   },
 
+  // Returns all the equipment options you can filter by.
   async getEquipmentList(req, res) {
     try {
       const data = await getEquipmentList();
@@ -60,6 +65,7 @@ exports.exerciseController = {
     }
   },
 
+  // Gets a single exercise by its id.
   async getExerciseById(req, res) {
     try {
       const data = await getExerciseById(req.params.id);

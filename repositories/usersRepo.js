@@ -1,9 +1,9 @@
 const { dbConnection } = require('../db_connection');
 
-// Users SQL only, parameterized. The stored password hash is returned to the SERVICE
+// Database stuff for the users table. Note the password hash goes back to the service only.
 
 exports.usersRepo = {
-    // Returns the user row { password } (the stored hash), or null when no such user.
+    // Reads a user's stored password hash from the users table. Returns the row or null.
     async findPasswordHash(userId) {
         const conn = await dbConnection.createConnection();
         try {
@@ -14,6 +14,7 @@ exports.usersRepo = {
         }
     },
 
+    // Saves a new password hash for a user into the users table.
     async updatePasswordHash(userId, hash) {
         const conn = await dbConnection.createConnection();
         try {

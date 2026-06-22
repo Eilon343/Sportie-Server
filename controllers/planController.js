@@ -1,9 +1,8 @@
 const planGeneratorService = require('../services/planGeneratorService');
 const { planService } = require('../services/planService');
 
-// req/res only: parse input, call the service, map results/errors to HTTP responses.
-
 exports.planController = {
+  // Builds a workout plan from the user's goal and preferences (doesn't save it yet).
   async generatePlan(req, res) {
     try {
       const { goal, daysPerWeek, bodyParts, exercisesPerDay } = req.body;
@@ -22,6 +21,7 @@ exports.planController = {
     }
   },
 
+  // Saves a plan for a trainee and returns the new plan id.
   async savePlan(req, res) {
     const { traineeId, goal, daysPerWeek, days } = req.body;
     if (!traineeId) return res.status(400).json({ message: 'Field "traineeId" is required' });
@@ -40,6 +40,7 @@ exports.planController = {
     }
   },
 
+  // Gets the trainee's current active plan, or 404 if they don't have one.
   async getActivePlan(req, res) {
     try {
       const { traineeId } = req.params;
@@ -56,8 +57,7 @@ exports.planController = {
     }
   },
 
-  // controllers/planController.js
-
+  // Gets one plan by its id, or 404 if not found.
   async getPlanById(req, res) {
     try {
       const { planId } = req.params;
@@ -73,6 +73,7 @@ exports.planController = {
     }
   },
 
+  // Updates an existing plan's goal, days per week, or day details.
   async updatePlan(req, res) {
     try {
       const { planId } = req.params;

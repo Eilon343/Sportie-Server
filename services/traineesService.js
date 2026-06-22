@@ -6,19 +6,19 @@ const { validateAvatar } = require('../utils/avatar');
 // validation, input normalization, and translating a duplicate-email error.
 
 exports.traineesService = {
-    // Returns the rows array as-is (controller maps empty -> 404).
+    // Gets all the trainees that belong to one trainer.
     async getTraineesByTrainer(trainerId) {
         return traineesRepo.findByTrainerId(trainerId);
     },
 
-    // Returns the single row, or null when not found.
+    // Gets one trainee by id, or null if there's no match.
     async getTraineeById(traineeId) {
         const rows = await traineesRepo.findById(traineeId);
         return rows.length ? rows[0] : null;
     },
 
-    // Returns true when a trainee row was updated, false when the trainee wasn't found.
-    // Throws a tagged error (err.status) for avatar-too-large (413) and duplicate email (409).
+    // Lets a trainee edit their own profile. Returns true if something was updated, false if not found.
+    // Throws 413 if the avatar is too big, 409 if the email is already taken.
     async updateOwnProfile(traineeId, body) {
         const {
             email, date_of_birth, country_code, phone_number,

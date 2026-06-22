@@ -16,6 +16,7 @@ const queries = [
     { label: 'training_plans count', sql: 'SELECT COUNT(*) AS trainees_with_plan FROM training_plans' },
 ];
 
+// Runs each diagnostic query and prints the results as a table.
 async function check() {
     const conn = await dbConnection.createConnection();
     try {

@@ -1,10 +1,8 @@
 const { dbConnection } = require('../db_connection');
 
-// All SQL for the analytics feature lives here. One async method per query,
-// parameterized with mysql2 placeholders (no string interpolation of inputs).
-// Each method opens and closes its own connection, matching the existing
-// per-handler connection pattern used across the controllers.
+// All the analytics queries live here. Each one opens its own connection and runs.
 
+// Little helper that runs a SQL query and hands back the rows, then closes the connection.
 async function runQuery(sql, params = []) {
     const conn = await dbConnection.createConnection();
     try {
@@ -16,7 +14,7 @@ async function runQuery(sql, params = []) {
 }
 
 exports.analyticsRepo = {
-    //every trainee under a trainer.
+    // Grabs all the trainees that belong to one trainer from the trainees table.
     async listTrainees(trainerId) {
         return runQuery(
             'SELECT trainee_id, name FROM trainees WHERE trainer_id = ? ORDER BY trainee_id',
@@ -24,8 +22,8 @@ exports.analyticsRepo = {
         );
     },
 
-    //trainees with no completed session in the last 7 days (incl. never trained).
-    //Most-overdue first: never-trained (NULL) on top, then oldest last-completed date.
+    // Finds trainees who haven't finished a workout in the last 7 days (or ever).
+    // Sorts the most overdue first so never-trained people show up at the top.
     async atRisk(trainerId) {
         return runQuery(
             `SELECT t.trainee_id,
@@ -43,8 +41,8 @@ exports.analyticsRepo = {
         );
     },
 
-    //Attendance: per trainee, completed sessions in last 4 weeks + expected/week from the
-    //latest training plan (highest plan_id). Service computes %/buckets from these raw numbers.
+    // For each trainee, pulls how many workouts they finished in the last 4 weeks
+    // plus how many per week their newest plan expects. The service does the math.
     async attendanceRaw(trainerId) {
         return runQuery(
             `SELECT t.trainee_id,
@@ -73,9 +71,10 @@ exports.analyticsRepo = {
         );
     },
 
-    /*Leaderboard (body_weight): % change earliest -> latest body_weight metric per trainee.
-        The UNIQUE(trainee_id, metric_type, measured_at) key guarantees one value per date,
-        so the MIN/MAX-date joins return exactly one row each. Single-point trainees excluded.*/
+    // Body-weight leaderboard: for each trainee, the percent change from their first
+    // to their latest weigh-in. People with only one measurement are left out.
+    /* The UNIQUE(trainee_id, metric_type, measured_at) key means one value per date,
+       so the MIN/MAX-date joins each return exactly one row. */
     async leaderboardBodyWeight(trainerId) {
         return runQuery(
             `WITH bounds AS (
@@ -103,9 +102,9 @@ exports.analyticsRepo = {
         );
     },
 
-    /*Leaderboard (strength): % change in best est. 1RM (Epley: weight*(1+reps/30))
-        from the trainee's earliest to latest training day. Max 1RM per day represents that day.
-        Single-day trainees excluded (first_d <> last_d)*/
+    // Strength leaderboard: percent change in each trainee's best estimated 1-rep max
+    // from their first training day to their latest. One-day trainees are skipped.
+    /* Uses the Epley formula weight*(1+reps/30); the best lift of a day stands for that day. */
     async leaderboardStrength(trainerId) {
         return runQuery(
             `WITH daily AS (
@@ -137,8 +136,8 @@ exports.analyticsRepo = {
         );
     },
 
-    /*Volume over time: SUM(weight*reps) over the trainer's completed sessions, by ISO week.
-        EARWEEK(..., 3) = ISO-8601 week (Monday start, week 1 has >= 4 days).*/
+    // Adds up total lifted volume (weight*reps) across the trainer's finished sessions,
+    // grouped by week. YEARWEEK(..., 3) just means ISO weeks (Monday start).
     async volumeOverTime(trainerId) {
         return runQuery(
             `SELECT YEARWEEK(ws.performed_at, 3) AS iso_yearweek,
@@ -155,8 +154,8 @@ exports.analyticsRepo = {
         );
     },
 
-    /*Engagement heatmap: completed sessions per trainee per ISO week, last 12 weeks.
-        Returns flat rows; the service pivots into the trainees x weeks grid.*/
+    // Counts finished sessions per trainee per week for the last 12 weeks.
+    // Comes back as plain rows; the service turns it into the heatmap grid.
     async engagementHeatmap(trainerId) {
         return runQuery(
             `SELECT t.trainee_id,

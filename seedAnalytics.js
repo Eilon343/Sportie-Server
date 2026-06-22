@@ -1,3 +1,5 @@
+// Fills the analytics tables with fake-but-realistic workout history so the
+// dashboards/leaderboards have something to show. Leaves the real user tables alone.
 require('dotenv').config();
 const { dbConnection } = require('./db_connection');
 
@@ -24,6 +26,7 @@ function pick(arr) {
     return arr[randInt(0, arr.length - 1)];
 }
 
+// Clears old analytics rows, then generates plans, sessions, sets and metrics per trainee.
 async function seed() {
     const conn = await dbConnection.createConnection();
     const counts = { training_plans: 0, workout_sessions: 0, logged_sets: 0, trainee_metrics: 0 };

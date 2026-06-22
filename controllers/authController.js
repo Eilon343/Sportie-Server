@@ -1,10 +1,7 @@
 const { authService } = require('../services/authService');
 
-// req/res only: call the service, map tagged errors (err.status) to JSON {message},
-// everything else to a 500 (plain-text send, no logging — matching prior behavior).
-// No SQL, no bcrypt, no dbConnection here.
-
 exports.authController = {
+    // Registers a new user from the signup form.
     async signup(req, res) {
         try {
             await authService.signup(req.body);
@@ -15,6 +12,7 @@ exports.authController = {
         }
     },
 
+    // Logs a user in and returns their token/info.
     async login(req, res) {
         try {
             const result = await authService.login(req.body);

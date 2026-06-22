@@ -1,6 +1,7 @@
 const { analyticsService } = require('../services/analyticsService');
 
 exports.analyticsController = {
+    // Lists the trainees who might be dropping off, for a given trainer. Used on the dashboard.
     //GET /api/analytics/at-risk/:trainerId
     async getAtRisk(req, res) {
         try {
@@ -12,6 +13,7 @@ exports.analyticsController = {
         }
     },
 
+    // Shows how the trainer's trainees are spread out by attendance. Used for charts.
     //GET /api/analytics/attendance-distribution/:trainerId
     async getAttendanceDistribution(req, res) {
         try {
@@ -23,6 +25,7 @@ exports.analyticsController = {
         }
     },
 
+    // Ranks a trainer's trainees by a chosen metric (body weight or strength).
     //GET /api/analytics/leaderboard/:trainerId?metric=body_weight|strength
     async getLeaderboard(req, res) {
         try {
@@ -34,6 +37,7 @@ exports.analyticsController = {
         }
     },
 
+    // Gives training volume over time so you can see progress trends.
     //GET /api/analytics/volume-over-time/:trainerId
     async getVolumeOverTime(req, res) {
         try {
@@ -45,6 +49,7 @@ exports.analyticsController = {
         }
     },
 
+    // Builds the heatmap data of when trainees are most active.
     //GET /api/analytics/engagement-heatmap/:trainerId
     async getEngagementHeatmap(req, res) {
         try {

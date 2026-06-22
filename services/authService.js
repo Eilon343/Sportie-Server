@@ -13,7 +13,7 @@ function httpError(status, message) {
 }
 
 exports.authService = {
-    // Resolves on success (controller emits 201). Throws tagged 400 on duplicate email.
+    // Hashes the password and creates a new trainer account. Errors out if the email is taken.
     async signup(body) {
         const { email, password } = body;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
@@ -25,9 +25,8 @@ exports.authService = {
         }
     },
 
-    // Returns the EXACT session contract { message, trainer }, where `trainer` is the
-    // trainers-table row as-is (no password column). The password-bearing users row used
-    // for bcrypt is never included. Throws tagged 401 / 403 to match current behavior.
+    // Checks email + password and returns the trainer profile (never the password).
+    // Throws 401 for bad credentials, 403 if the account has no trainer profile.
     async login(body) {
         const { email, password } = body;
 

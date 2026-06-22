@@ -13,7 +13,8 @@ function httpError(status, message) {
 }
 
 exports.usersService = {
-    // Resolves on success; throws tagged errors for every non-200 branch.
+    // Changes a user's password after checking the fields and confirming the current one is right.
+    // Throws 400 for bad input, 404 if no user, 401 if the current password is wrong.
     async changePassword(userId, body) {
         const { currentPassword, newPassword, confirmNewPassword } = body || {};
 

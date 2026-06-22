@@ -1,9 +1,7 @@
 const { usersService } = require('../services/usersService');
 
-// req/res only: call the service, map tagged errors (err.status) to JSON {message},
-// everything else to a 500. No SQL, no bcrypt, no dbConnection here.
-
 exports.usersController = {
+    // Changes a user's password.
     async changePassword(req, res) {
         try {
             await usersService.changePassword(req.params.userId, req.body);

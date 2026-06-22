@@ -1,5 +1,6 @@
 const mysql = require('mysql2/promise');
 
+// Opens a connection to the MySQL/TiDB database using the env settings.
 exports.dbConnection = {
     async createConnection({...options} = {}) {
         try {
