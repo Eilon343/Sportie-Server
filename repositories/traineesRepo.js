@@ -21,12 +21,11 @@ exports.traineesRepo = {
     // Updates both the users row and the trainees row together in one transaction.
     // Returns how many trainee rows changed (0 means the trainee wasn't found).
     async updateProfileTx(traineeId, userFields, traineeFields) {
-        const pool = await dbConnection.createConnection();
-        const conn = await pool.getConnection();
+        const connection = await dbConnection.createConnection();
         try {
-            await conn.beginTransaction();
+            await connection.beginTransaction();
 
-            await conn.execute(
+            await connection.execute(
                 `UPDATE users SET
                     email = COALESCE(?, email),
                     date_of_birth = ?, country_code = ?, phone_number = ?
@@ -34,7 +33,7 @@ exports.traineesRepo = {
                 [userFields.email, userFields.date_of_birth, userFields.country_code, userFields.phone_number, traineeId]
             );
 
-            const [result] = await conn.execute(
+            const [result] = await connection.execute(
                 `UPDATE trainees SET
                     name = COALESCE(?, name),
                     goal = COALESCE(?, goal),
@@ -44,16 +43,16 @@ exports.traineesRepo = {
             );
 
             if (result.affectedRows === 0) {
-                await conn.rollback();
+                await connection.rollback();
                 return 0;
             }
-            await conn.commit();
+            await connection.commit();
             return result.affectedRows;
         } catch (error) {
-            await conn.rollback();
+            await connection.rollback();
             throw error;
         } finally {
-            conn.release();
+            connection.end();
         }
     },
 };

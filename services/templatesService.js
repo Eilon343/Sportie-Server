@@ -1,0 +1,225 @@
+const { templatesRepo } = require('../repositories/templatesRepo');
+const { planService } = require('./planService');
+
+// Per-trainer template caps. Checked in the service BEFORE any insert.
+const WORKOUT_TEMPLATE_CAP = 10;
+const MEAL_TEMPLATE_CAP = 5;
+
+// Tagged error so the controller can map it to the right HTTP status (e.g. 409).
+function httpError(status, message) {
+    const err = new Error(message);
+    err.status = status;
+    return err;
+}
+
+// Turns the flat workout join rows into nested templates: template -> blocks -> exercises.
+// Day-specific templates expose their blocks as `days`, abstract ones as `pool`.
+function shapeWorkoutTemplates(rows) {
+    const byTemplate = new Map();
+
+    for (const row of rows) {
+        let tpl = byTemplate.get(row.template_id);
+        if (!tpl) {
+            tpl = {
+                template_id: row.template_id,
+                name: row.name,
+                mode: row.mode,
+                goal: row.goal,
+                _blocks: new Map()
+            };
+            byTemplate.set(row.template_id, tpl);
+        }
+
+        // A LEFT JOIN with no blocks still returns one row with null block_id.
+        if (row.block_id == null) continue;
+
+        let block = tpl._blocks.get(row.block_id);
+        if (!block) {
+            block = {
+                block_index: row.block_index,
+                label: row.label,
+                block_type: row.block_type,
+                notes: row.notes,
+                exercises: []
+            };
+            tpl._blocks.set(row.block_id, block);
+        }
+
+        if (row.exercise_row_id != null) {
+            block.exercises.push({
+                exercise_id: row.exercise_id,
+                custom_exercise_name: row.custom_exercise_name,
+                sets: row.sets,
+                reps: row.reps,
+                rest_seconds: row.rest_seconds
+            });
+        }
+    }
+
+    return Array.from(byTemplate.values()).map((tpl) => {
+        const blocks = Array.from(tpl._blocks.values());
+        const shaped = { template_id: tpl.template_id, name: tpl.name, mode: tpl.mode, goal: tpl.goal };
+        // Frontend mapWorkoutTemplate reads `days` for day-specific and `pool` for abstract.
+        if (tpl.mode === 'abstract') shaped.pool = blocks;
+        else shaped.days = blocks;
+        return shaped;
+    });
+}
+
+// Turns the flat meal join rows into nested templates: template -> slots -> options (with macros).
+function shapeMealTemplates(rows) {
+    const byTemplate = new Map();
+
+    for (const row of rows) {
+        let tpl = byTemplate.get(row.template_id);
+        if (!tpl) {
+            tpl = { template_id: row.template_id, name: row.name, _slots: new Map() };
+            byTemplate.set(row.template_id, tpl);
+        }
+
+        if (row.slot_id == null) continue;
+
+        let slot = tpl._slots.get(row.slot_id);
+        if (!slot) {
+            slot = { slot_index: row.slot_index, slot_label: row.slot_label, options: [] };
+            tpl._slots.set(row.slot_id, slot);
+        }
+
+        if (row.option_id != null) {
+            slot.options.push({
+                mealdb_id: row.mealdb_id,
+                meal_name: row.meal_name,
+                meal_thumb: row.meal_thumb,
+                notes: row.notes,
+                quantity: row.quantity,
+                unit: row.unit,
+                calories_per_100: row.calories_per_100,
+                protein_per_100: row.protein_per_100,
+                carbs_per_100: row.carbs_per_100,
+                fat_per_100: row.fat_per_100,
+                sugar_per_100: row.sugar_per_100,
+                fiber_per_100: row.fiber_per_100
+            });
+        }
+    }
+
+    return Array.from(byTemplate.values()).map((tpl) => ({
+        template_id: tpl.template_id,
+        name: tpl.name,
+        slots: Array.from(tpl._slots.values())
+    }));
+}
+
+//  WORKOUT 
+exports.templatesService = {
+
+    // Lists a trainer's workout templates, shaped for the frontend mapWorkoutTemplate.
+    async listWorkoutTemplates(trainerId) {
+        const rows = await templatesRepo.getWorkoutTemplateRowsByTrainer(trainerId);
+        return shapeWorkoutTemplates(rows);
+    },
+
+    // Saves a new workout template, but only if the trainer is under the cap. Returns its id.
+    async saveWorkoutTemplate({ trainerId, name, mode, goal, blocks }) {
+        const count = await templatesRepo.countWorkoutTemplates(trainerId);
+        if (count >= WORKOUT_TEMPLATE_CAP) {
+            throw httpError(409, `Workout template limit reached (${WORKOUT_TEMPLATE_CAP})`);
+        }
+        return templatesRepo.saveWorkoutTemplateTx(trainerId, { name, mode, goal, blocks: blocks || [] });
+    },
+
+    // Deletes a workout template (cascades to blocks/exercises). Returns rows deleted.
+    async deleteWorkoutTemplate(templateId) {
+        return templatesRepo.deleteWorkoutTemplate(templateId);
+    },
+
+    // Edits an existing workout template in place. 404s if the id doesn't exist.
+    async updateWorkoutTemplate(templateId, { name, mode, goal, blocks }) {
+        const ok = await templatesRepo.updateWorkoutTemplateTx(templateId, { name, mode, goal, blocks: blocks || [] });
+        if (!ok) throw httpError(404, 'Template not found');
+        return true;
+    },
+
+    // Assigns a workout template to a trainee as a fresh training plan (copy-on-assign).
+    // Reuses planService.savePlan for the actual save, then makes the new plan the only
+    // active one. Cardio/rest blocks have no exercises so they don't carry into the plan.
+    async assignWorkoutTemplate(templateId, traineeId) {
+        const rows = await templatesRepo.getWorkoutTemplateRowsById(templateId);
+        if (!rows || rows.length === 0) throw httpError(404, 'Workout template not found');
+
+        const [shaped] = shapeWorkoutTemplates(rows);
+        const blocks = shaped.days || shaped.pool || [];
+
+        // Reshape into the { dayNumber, exercises } structure planService.savePlan expects.
+        // Only workout blocks become plan days (training_plans has no concept of cardio/rest).
+        const days = blocks
+            .filter((b) => b.block_type === 'workout' && b.exercises.length > 0)
+            .map((b) => ({
+                dayNumber: b.block_index,
+                exercises: b.exercises.map((ex) => ({
+                    id: ex.exercise_id || null,
+                    name: ex.custom_exercise_name || undefined,
+                    sets: ex.sets,
+                    reps: ex.reps,
+                    restSeconds: ex.rest_seconds
+                }))
+            }));
+
+        // Reuse the existing plan-save path (writes training_plans + plan_exercises in its own
+        // transaction and auto-inserts any unknown exercises). New plan is is_active = 1.
+        const planId = await planService.savePlan({
+            traineeId,
+            goal: shaped.goal,
+            daysPerWeek: days.length,
+            days
+        });
+
+        // Collapse to a single active plan. Done after the save so a save failure never
+        // leaves the trainee with zero active plans.
+        await templatesRepo.deactivateOtherActivePlansTx(traineeId, planId);
+
+        return planId;
+    },
+
+    //  MEAL 
+
+    // Lists a trainer's meal templates, shaped for the frontend mapMealTemplate.
+    async listMealTemplates(trainerId) {
+        const rows = await templatesRepo.getMealTemplateRowsByTrainer(trainerId);
+        return shapeMealTemplates(rows);
+    },
+
+    // Saves a new meal template, but only if the trainer is under the cap. Returns its id.
+    async saveMealTemplate({ trainerId, name, slots }) {
+        const count = await templatesRepo.countMealTemplates(trainerId);
+        if (count >= MEAL_TEMPLATE_CAP) {
+            throw httpError(409, `Meal template limit reached (${MEAL_TEMPLATE_CAP})`);
+        }
+        return templatesRepo.saveMealTemplateTx(trainerId, { name, slots: slots || [] });
+    },
+
+    // Deletes a meal template (cascades to slots/options). Returns rows deleted.
+    async deleteMealTemplate(templateId) {
+        return templatesRepo.deleteMealTemplate(templateId);
+    },
+
+    // Edits an existing meal template in place. 404s if the id doesn't exist.
+    async updateMealTemplate(templateId, { name, slots }) {
+        const ok = await templatesRepo.updateMealTemplateTx(templateId, { name, slots: slots || [] });
+        if (!ok) throw httpError(404, 'Template not found');
+        return true;
+    },
+
+    // Assigns a meal template to a trainee as a new meal_plan (copy-on-assign with replace).
+    // The whole deactivate-old + copy-new happens in one repo transaction. Returns new plan id.
+    async assignMealTemplate(templateId, traineeId) {
+        const rows = await templatesRepo.getMealTemplateRowsById(templateId);
+        if (!rows || rows.length === 0) throw httpError(404, 'Meal template not found');
+
+        const [shaped] = shapeMealTemplates(rows);
+        return templatesRepo.assignMealTemplateTx(traineeId, templateId, {
+            name: shaped.name,
+            slots: shaped.slots
+        });
+    }
+};

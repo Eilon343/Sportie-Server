@@ -1,0 +1,161 @@
+const { templatesService } = require('../services/templatesService');
+
+exports.templatesController = {
+    //  WORKOUT 
+
+    // GET /api/templates/workout?trainerId= — list a trainer's workout templates.
+    async listWorkoutTemplates(req, res) {
+        try {
+            const { trainerId } = req.query;
+            if (!trainerId) return res.status(400).json({ message: 'Query "trainerId" is required' });
+
+            const templates = await templatesService.listWorkoutTemplates(trainerId);
+            res.status(200).json(templates);
+        } catch (error) {
+            console.error('Error listing workout templates:', error);
+            res.status(500).json({ message: 'Error listing workout templates: ' + error.message });
+        }
+    },
+
+    // POST /api/templates/workout — save a new workout template (409 if over the cap).
+    async saveWorkoutTemplate(req, res) {
+        try {
+            console.log('[DEBUG] saveWorkoutTemplate req.body:', JSON.stringify(req.body)); // DEBUG temp
+            const { trainerId, name, mode, goal, blocks } = req.body;
+            if (!trainerId) return res.status(400).json({ message: 'Field "trainerId" is required' });
+            if (!name) return res.status(400).json({ message: 'Field "name" is required' });
+
+            const templateId = await templatesService.saveWorkoutTemplate({ trainerId, name, mode, goal, blocks });
+            res.status(201).json({ success: true, templateId });
+        } catch (error) {
+            if (error.status) return res.status(error.status).json({ message: error.message });
+            console.error('Error saving workout template:', error);
+            res.status(500).json({ message: 'Error saving workout template: ' + error.message });
+        }
+    },
+
+    // DELETE /api/templates/workout/:id — delete a workout template (cascades).
+    async deleteWorkoutTemplate(req, res) {
+        try {
+            const { id } = req.params;
+            const deleted = await templatesService.deleteWorkoutTemplate(id);
+            if (!deleted) return res.status(404).json({ message: 'Workout template not found' });
+            res.status(200).json({ success: true });
+        } catch (error) {
+            console.error('Error deleting workout template:', error);
+            res.status(500).json({ message: 'Error deleting workout template: ' + error.message });
+        }
+    },
+
+    // PUT /api/templates/workout/:id — edit an existing workout template in place.
+    async updateWorkoutTemplate(req, res) {
+        try {
+            const { id } = req.params;
+            if (!/^\d+$/.test(id) || Number(id) <= 0) return res.status(400).json({ message: 'Invalid template id' });
+            const { name, mode, goal, blocks } = req.body;
+            if (!name) return res.status(400).json({ message: 'Field "name" is required' });
+
+            await templatesService.updateWorkoutTemplate(id, { name, mode, goal, blocks });
+            res.status(200).json({ success: true, templateId: Number(id) });
+        } catch (error) {
+            if (error.status) return res.status(error.status).json({ message: error.message });
+            console.error('Error updating workout template:', error);
+            res.status(500).json({ message: 'Error updating workout template: ' + error.message });
+        }
+    },
+
+    // POST /api/templates/workout/:id/assign — copy the template into a new active plan for a trainee.
+    async assignWorkoutTemplate(req, res) {
+        try {
+            const { id } = req.params;
+            const { traineeId } = req.body;
+            if (!traineeId) return res.status(400).json({ message: 'Field "traineeId" is required' });
+
+            const planId = await templatesService.assignWorkoutTemplate(id, traineeId);
+            res.status(201).json({ success: true, planId });
+        } catch (error) {
+            if (error.status) return res.status(error.status).json({ message: error.message });
+            console.error('Error assigning workout template:', error);
+            res.status(500).json({ message: 'Error assigning workout template: ' + error.message });
+        }
+    },
+
+    //  MEAL 
+
+    // GET /api/templates/meal?trainerId= — list a trainer's meal templates.
+    async listMealTemplates(req, res) {
+        try {
+            const { trainerId } = req.query;
+            if (!trainerId) return res.status(400).json({ message: 'Query "trainerId" is required' });
+
+            const templates = await templatesService.listMealTemplates(trainerId);
+            res.status(200).json(templates);
+        } catch (error) {
+            console.error('Error listing meal templates:', error);
+            res.status(500).json({ message: 'Error listing meal templates: ' + error.message });
+        }
+    },
+
+    // POST /api/templates/meal — save a new meal template (409 if over the cap).
+    async saveMealTemplate(req, res) {
+        try {
+            console.log('[DEBUG] saveMealTemplate req.body:', JSON.stringify(req.body, null, 2)); // DEBUG temp
+            const { trainerId, name, slots } = req.body;
+            if (!trainerId) return res.status(400).json({ message: 'Field "trainerId" is required' });
+            if (!name) return res.status(400).json({ message: 'Field "name" is required' });
+
+            const templateId = await templatesService.saveMealTemplate({ trainerId, name, slots });
+            res.status(201).json({ success: true, templateId });
+        } catch (error) {
+            if (error.status) return res.status(error.status).json({ message: error.message });
+            console.error('Error saving meal template:', error);
+            res.status(500).json({ message: 'Error saving meal template: ' + error.message });
+        }
+    },
+
+    // DELETE /api/templates/meal/:id — delete a meal template (cascades).
+    async deleteMealTemplate(req, res) {
+        try {
+            const { id } = req.params;
+            const deleted = await templatesService.deleteMealTemplate(id);
+            if (!deleted) return res.status(404).json({ message: 'Meal template not found' });
+            res.status(200).json({ success: true });
+        } catch (error) {
+            console.error('Error deleting meal template:', error);
+            res.status(500).json({ message: 'Error deleting meal template: ' + error.message });
+        }
+    },
+
+    // PUT /api/templates/meal/:id — edit an existing meal template in place.
+    async updateMealTemplate(req, res) {
+        try {
+            const { id } = req.params;
+            if (!/^\d+$/.test(id) || Number(id) <= 0) return res.status(400).json({ message: 'Invalid template id' });
+            const { name, slots } = req.body;
+            if (!name) return res.status(400).json({ message: 'Field "name" is required' });
+
+            await templatesService.updateMealTemplate(id, { name, slots });
+            res.status(200).json({ success: true, templateId: Number(id) });
+        } catch (error) {
+            if (error.status) return res.status(error.status).json({ message: error.message });
+            console.error('Error updating meal template:', error);
+            res.status(500).json({ message: 'Error updating meal template: ' + error.message });
+        }
+    },
+
+    // POST /api/templates/meal/:id/assign — copy the template into a new active meal plan for a trainee.
+    async assignMealTemplate(req, res) {
+        try {
+            const { id } = req.params;
+            const { traineeId } = req.body;
+            if (!traineeId) return res.status(400).json({ message: 'Field "traineeId" is required' });
+
+            const mealPlanId = await templatesService.assignMealTemplate(id, traineeId);
+            res.status(201).json({ success: true, mealPlanId });
+        } catch (error) {
+            if (error.status) return res.status(error.status).json({ message: error.message });
+            console.error('Error assigning meal template:', error);
+            res.status(500).json({ message: 'Error assigning meal template: ' + error.message });
+        }
+    }
+};

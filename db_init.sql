@@ -54,6 +54,7 @@ create table if not exists training_plans (
     trainee_id int,
     goal varchar(100),
     days_per_week int,
+    is_active boolean not null default true,
     created_at timestamp default current_timestamp,
     foreign key (trainee_id) references trainees(trainee_id) on delete cascade
 );

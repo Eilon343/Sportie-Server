@@ -44,14 +44,14 @@ async function putPassword(userId, payload) {
 
 // Tries wrong/mismatched/correct password changes and confirms the stored hash actually updated.
 async function main() {
-    const conn = await dbConnection.createConnection();
+    const connection = await dbConnection.createConnection();
     let userId = null;
 
     try {
         // ---- 1. SETUP: throwaway user with a known password, hashed like the app ----
         console.log('=== 1. SETUP ===');
         const hash = await bcrypt.hash(OLD_PASSWORD, saltRounds);
-        const [ins] = await conn.execute(
+        const [ins] = await connection.execute(
             'INSERT INTO users (email, password, role) VALUES (?, ?, ?)',
             [`_pwtest_${STAMP}@test.local`, hash, 'trainee']
         );
@@ -90,7 +90,7 @@ async function main() {
 
         // ---- 5. Prove the change took ----
         console.log('\n=== 5. PROVE the stored hash changed ===');
-        const [rows] = await conn.execute('SELECT password FROM users WHERE user_id = ?', [userId]);
+        const [rows] = await connection.execute('SELECT password FROM users WHERE user_id = ?', [userId]);
         const storedHash = rows[0].password;
         const newMatches = await bcrypt.compare(NEW_PASSWORD, storedHash);
         const oldMatches = await bcrypt.compare(OLD_PASSWORD, storedHash);
@@ -106,13 +106,13 @@ async function main() {
         console.log('\n=== 7. CLEANUP ===');
         try {
             if (userId !== null && !FORBIDDEN_USER_IDS.includes(Number(userId))) {
-                const [r] = await conn.execute('DELETE FROM users WHERE user_id = ? AND role = ?', [userId, 'trainee']);
+                const [r] = await connection.execute('DELETE FROM users WHERE user_id = ? AND role = ?', [userId, 'trainee']);
                 console.log(`Removed throwaway user ${userId} (rows: ${r.affectedRows})`);
             }
         } catch (cleanupError) {
             console.error('Cleanup error:', cleanupError.message);
         }
-        conn.end();
+        connection.end();
         console.log(`\n=== ${pass ? 'ALL CHECKS PASSED' : 'FAILURES DETECTED'} ===`);
         if (!pass) process.exitCode = 1;
     }

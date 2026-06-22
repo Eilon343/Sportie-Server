@@ -35,12 +35,11 @@ exports.trainersRepo = {
     // Updates the trainer's users row and trainers row together in one transaction.
     // Returns how many trainer rows changed (0 means the trainer wasn't found).
     async updateProfileTx(trainerId, userFields, trainerFields) {
-        const pool = await dbConnection.createConnection();
-        const conn = await pool.getConnection();
+        const connection = await dbConnection.createConnection();
         try {
-            await conn.beginTransaction();
+            await connection.beginTransaction();
 
-            await conn.execute(
+            await connection.execute(
                 `UPDATE users SET
                     email = COALESCE(?, email),
                     date_of_birth = ?, country_code = ?, phone_number = ?
@@ -48,7 +47,7 @@ exports.trainersRepo = {
                 [userFields.email, userFields.date_of_birth, userFields.country_code, userFields.phone_number, trainerId]
             );
 
-            const [result] = await conn.execute(
+            const [result] = await connection.execute(
                 `UPDATE trainers SET
                     name = COALESCE(?, name),
                     specialization = COALESCE(?, specialization),
@@ -61,37 +60,36 @@ exports.trainersRepo = {
             );
 
             if (result.affectedRows === 0) {
-                await conn.rollback();
+                await connection.rollback();
                 return 0;
             }
-            await conn.commit();
+            await connection.commit();
             return result.affectedRows;
         } catch (error) {
-            await conn.rollback();
+            await connection.rollback();
             throw error;
         } finally {
-            conn.release();
+            connection.end();
         }
     },
 
     // Makes sure the trainee belongs to this trainer, then updates them, all in one transaction.
     // Returns { found, changed } so the caller knows if it existed and if anything changed.
     async updateManagedTraineeTx(trainerId, traineeId, fields) {
-        const pool = await dbConnection.createConnection();
-        const conn = await pool.getConnection();
+        const connection = await dbConnection.createConnection();
         try {
-            await conn.beginTransaction();
+            await connection.beginTransaction();
 
-            const [own] = await conn.execute(
+            const [own] = await connection.execute(
                 'SELECT trainee_id FROM trainees WHERE trainee_id = ? AND trainer_id = ?',
                 [traineeId, trainerId]
             );
             if (own.length === 0) {
-                await conn.rollback();
+                await connection.rollback();
                 return { found: false, changed: 0 };
             }
 
-            const [result] = await conn.execute(
+            const [result] = await connection.execute(
                 `UPDATE trainees SET
                     status = COALESCE(?, status),
                     progress = COALESCE(?, progress),
@@ -102,48 +100,47 @@ exports.trainersRepo = {
                 [fields.status, fields.progress, fields.goal, fields.start_weight, fields.current_weight, traineeId]
             );
 
-            await conn.commit();
+            await connection.commit();
             return { found: true, changed: result.affectedRows };
         } catch (error) {
-            await conn.rollback();
+            await connection.rollback();
             throw error;
         } finally {
-            conn.release();
+            connection.end();
         }
     },
 
     // Links a free trainee to a trainer, in one transaction. Tells you 'not_found',
     // 'already_assigned', or 'assigned' depending on what happened.
     async assignTraineeTx(trainerId, traineeId) {
-        const pool = await dbConnection.createConnection();
-        const conn = await pool.getConnection();
+        const connection = await dbConnection.createConnection();
         try {
-            await conn.beginTransaction();
+            await connection.beginTransaction();
 
-            const [rows] = await conn.execute(
+            const [rows] = await connection.execute(
                 'SELECT trainee_id, trainer_id FROM trainees WHERE trainee_id = ?',
                 [traineeId]
             );
             if (rows.length === 0) {
-                await conn.rollback();
+                await connection.rollback();
                 return 'not_found';
             }
             if (rows[0].trainer_id !== null) {
-                await conn.rollback();
+                await connection.rollback();
                 return 'already_assigned';
             }
 
-            await conn.execute(
+            await connection.execute(
                 'UPDATE trainees SET trainer_id = ? WHERE trainee_id = ?',
                 [trainerId, traineeId]
             );
-            await conn.commit();
+            await connection.commit();
             return 'assigned';
         } catch (error) {
-            await conn.rollback();
+            await connection.rollback();
             throw error;
         } finally {
-            conn.release();
+            connection.end();
         }
     },
 
@@ -162,31 +159,30 @@ exports.trainersRepo = {
     // then deletes the user row (which cascades to the trainers row). All in one transaction.
     // Returns how many user rows were deleted (0 means the trainer wasn't found).
     async deleteTrainerTx(trainerId) {
-        const pool = await dbConnection.createConnection();
-        const conn = await pool.getConnection();
+        const connection = await dbConnection.createConnection();
         try {
-            await conn.beginTransaction();
+            await connection.beginTransaction();
 
-            await conn.execute(
+            await connection.execute(
                 'UPDATE trainees SET trainer_id = NULL WHERE trainer_id = ?',
                 [trainerId]
             );
-            const [result] = await conn.execute(
+            const [result] = await connection.execute(
                 'DELETE FROM users WHERE user_id = ? AND role = ?',
                 [trainerId, 'trainer']
             );
 
             if (result.affectedRows === 0) {
-                await conn.rollback();
+                await connection.rollback();
                 return 0;
             }
-            await conn.commit();
+            await connection.commit();
             return result.affectedRows;
         } catch (error) {
-            await conn.rollback();
+            await connection.rollback();
             throw error;
         } finally {
-            conn.release();
+            connection.end();
         }
     },
 };

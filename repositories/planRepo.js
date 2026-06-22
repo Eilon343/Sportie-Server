@@ -4,9 +4,9 @@ exports.planRepo = {
     async savePlan({ traineeId, goal, daysPerWeek }, exerciseRows) {
         const connection = await dbConnection.createConnection();
         try {
-            await conn.beginTransaction();
+            await connection.beginTransaction();
 
-            const [planResult] = await conn.execute(
+            const [planResult] = await connection.execute(
                 `INSERT INTO training_plans (trainee_id, goal, days_per_week) VALUES (?, ?, ?)`,
                 [traineeId, goal, daysPerWeek]
             );
@@ -14,7 +14,7 @@ exports.planRepo = {
 
             if (exerciseRows.length > 0) {
                 const values = exerciseRows.map((row) => [planId, ...row]);
-                await conn.query(
+                await connection.query(
                     `INSERT INTO plan_exercises
                      (plan_id, exercise_id, custom_exercise_name, day_index, sets, reps, rest_seconds)
                      VALUES ?`,
@@ -22,13 +22,13 @@ exports.planRepo = {
                 );
             }
 
-            await conn.commit();
+            await connection.commit();
             return planId;
         } catch (error) {
-            await conn.rollback();
+            await connection.rollback();
             throw error;
         } finally {
-            conn.release();
+            connection.end();
         }
     },
 
@@ -103,22 +103,21 @@ exports.planRepo = {
 
     // Updates a plan's basics, then wipes and re-adds its exercises, all in one transaction.
     async updatePlanTx(planId, { goal, daysPerWeek }, exerciseRows) {
-        const pool = await dbConnection.createConnection();
-        const conn = await pool.getConnection();
+        const connection = await dbConnection.createConnection();
         try {
-            await conn.beginTransaction();
-            await conn.execute(
+            await connection.beginTransaction();
+            await connection.execute(
                 `UPDATE training_plans SET goal = ?, days_per_week = ? WHERE plan_id = ?`,
                 [goal, daysPerWeek, planId]
             );
-            await conn.execute(
+            await connection.execute(
                 `DELETE FROM plan_exercises WHERE plan_id = ?`,
                 [planId]
             );
 
             if (exerciseRows.length > 0) {
                 const values = exerciseRows.map((row) => [planId, ...row]);
-                await conn.query(
+                await connection.query(
                     `INSERT INTO plan_exercises
                      (plan_id, exercise_id, custom_exercise_name, day_index, sets, reps, rest_seconds)
                      VALUES ?`,
@@ -126,14 +125,14 @@ exports.planRepo = {
                 );
             }
 
-            await conn.commit();
+            await connection.commit();
             return true;
         } catch (error) {
-            await conn.rollback();
+            await connection.rollback();
             console.error('Transaction failed, rolled back:', error);
             throw error;
         } finally {
-            conn.release();
+            connection.end();
         }
     }
 };

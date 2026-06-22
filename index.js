@@ -25,6 +25,7 @@ const mealRouter = require('./routes/mealRouter');
 const planRouter = require('./routes/planRouter');
 const usersRouter = require('./routes/usersRouter');
 const analyticsRouter = require('./routes/analyticsRouter');
+const templatesRoutes = require('./routes/templatesRoutes');
 
 app.use('/api/auth', authRouter);
 app.use('/api/trainers', trainersRouter);
@@ -34,6 +35,7 @@ app.use('/api/meals', mealRouter);
 app.use('/api/plans', planRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/analytics', analyticsRouter);
+app.use('/api/templates', templatesRoutes);
 
 // Simple health check so you can tell the server is up.
 app.get('/', (req, res) => {

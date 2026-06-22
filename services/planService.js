@@ -43,7 +43,7 @@ exports.planService = {
                     }
                 }
             };
-            const planId = await planRepo.savePlanTx({ traineeId, goal, daysPerWeek }, exerciseRows);
+            const planId = await planRepo.savePlan({ traineeId, goal, daysPerWeek }, exerciseRows);
             return planId;
         } catch (error) {
             console.error('Error saving plan:', error);
