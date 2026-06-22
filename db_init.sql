@@ -67,6 +67,7 @@ create table if not exists plan_exercises (
     sets int,
     reps int,
     rest_seconds int,
+    is_active boolean default true,
     foreign key (plan_id) references training_plans(plan_id) on delete cascade,
     foreign key (exercise_id) references exercises(exercise_id) on delete cascade
 );
