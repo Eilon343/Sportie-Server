@@ -1,6 +1,17 @@
 const { dbConnection } = require('../db_connection');
 
 exports.planRepo = {
+    // Confirms a trainee exists, so we can 404 a bad trainee_id up front instead of
+    // letting the training_plans INSERT fail on its foreign key (500).
+    async traineeExists(traineeId) {
+        const pool = await dbConnection.createConnection();
+        const [rows] = await pool.execute(
+            'SELECT 1 FROM trainees WHERE trainee_id = ? LIMIT 1',
+            [traineeId]
+        );
+        return rows.length > 0;
+    },
+
     async savePlan({ traineeId, goal, daysPerWeek }, exerciseRows) {
         const connection = await dbConnection.createConnection();
         try {
@@ -106,6 +117,16 @@ exports.planRepo = {
         const connection = await dbConnection.createConnection();
         try {
             await connection.beginTransaction();
+            // Confirm the plan exists first (an UPDATE's affectedRows is 0 when the
+            // values are unchanged, so it can't tell "missing" from "no-op").
+            const [existing] = await connection.execute(
+                `SELECT plan_id FROM training_plans WHERE plan_id = ?`,
+                [planId]
+            );
+            if (existing.length === 0) {
+                await connection.rollback();
+                return false;
+            }
             await connection.execute(
                 `UPDATE training_plans SET goal = ?, days_per_week = ? WHERE plan_id = ?`,
                 [goal, daysPerWeek, planId]

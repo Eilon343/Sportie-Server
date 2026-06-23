@@ -13,6 +13,16 @@ async function runQuery(sql, params = []) {
 }
 
 exports.analyticsRepo = {
+    // Checks whether a trainer actually exists, so endpoints can return 404
+    // instead of an empty result for an unknown trainer id.
+    async trainerExists(trainerId) {
+        const rows = await runQuery(
+            'SELECT 1 FROM trainers WHERE trainer_id = ? LIMIT 1',
+            [trainerId]
+        );
+        return rows.length > 0;
+    },
+
     // Grabs all the trainees that belong to one trainer from the trainees table.
     async listTrainees(trainerId) {
         return runQuery(

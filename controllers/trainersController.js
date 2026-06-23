@@ -1,10 +1,15 @@
 const { trainersService } = require('../services/trainersService');
+const { isInvalidId } = require('../utils/validation');
 
 exports.trainersController = {
     // Gets a single trainer by id, or 404 if not found.
     async getTrainerById(req, res) {
+        const { trainerId } = req.params;
+        if (isInvalidId(trainerId)) {
+            return res.status(400).json({ message: 'Invalid trainerId: must be a positive integer' });
+        }
         try {
-            const trainer = await trainersService.getTrainerById(req.params.trainerId);
+            const trainer = await trainersService.getTrainerById(trainerId);
             if (!trainer) {
                 return res.status(404).json({ message: 'Trainer not found' });
             }
@@ -28,8 +33,15 @@ exports.trainersController = {
 
     // Gets the trainer's trainees who were active this month.
     async getMonthlyActiveTrainees(req, res) {
+        const { trainerId } = req.params;
+        if (isInvalidId(trainerId)) {
+            return res.status(400).json({ message: 'Invalid trainerId: must be a positive integer' });
+        }
         try {
-            const rows = await trainersService.getMonthlyActiveTrainees(req.params.trainerId);
+            const rows = await trainersService.getMonthlyActiveTrainees(trainerId);
+            if (rows === null) {
+                return res.status(404).json({ message: 'Trainer not found' });
+            }
             res.status(200).json(rows);
         } catch (error) {
             console.error('Error fetching monthly active trainees:', error);
@@ -39,8 +51,12 @@ exports.trainersController = {
 
     // Lets a trainer update their own profile info.
     async updateOwnProfile(req, res) {
+        const { trainerId } = req.params;
+        if (isInvalidId(trainerId)) {
+            return res.status(400).json({ message: 'Invalid trainerId: must be a positive integer' });
+        }
         try {
-            const updated = await trainersService.updateOwnProfile(req.params.trainerId, req.body);
+            const updated = await trainersService.updateOwnProfile(trainerId, req.body);
             if (!updated) {
                 return res.status(404).json({ message: 'Trainer not found' });
             }
@@ -54,9 +70,16 @@ exports.trainersController = {
 
     // Lets a trainer edit one of their trainees, but only certain allowed fields.
     async updateManagedTrainee(req, res) {
+        const { trainerId, traineeId } = req.params;
+        if (isInvalidId(trainerId)) {
+            return res.status(400).json({ message: 'Invalid trainerId: must be a positive integer' });
+        }
+        if (isInvalidId(traineeId)) {
+            return res.status(400).json({ message: 'Invalid traineeId: must be a positive integer' });
+        }
         try {
             const changed = await trainersService.updateManagedTrainee(
-                req.params.trainerId, req.params.traineeId, req.body
+                trainerId, traineeId, req.body
             );
             res.status(200).json({ message: 'Trainee updated', changed });
         } catch (error) {
@@ -68,11 +91,18 @@ exports.trainersController = {
 
     // Attaches an existing unassigned trainee to this trainer.
     async assignTrainee(req, res) {
+        const { trainerId } = req.params;
+        if (isInvalidId(trainerId)) {
+            return res.status(400).json({ message: 'Invalid trainerId: must be a positive integer' });
+        }
         const { traineeId } = req.body;
         if (!traineeId) return res.status(400).json({ message: 'traineeId is required' });
+        if (isInvalidId(String(traineeId))) {
+            return res.status(400).json({ message: 'Invalid traineeId: must be a positive integer' });
+        }
 
         try {
-            await trainersService.assignTrainee(req.params.trainerId, traineeId);
+            await trainersService.assignTrainee(trainerId, traineeId);
             res.status(200).json({ message: 'Trainee assigned successfully' });
         } catch (error) {
             if (error.status) return res.status(error.status).json({ message: error.message });
@@ -83,8 +113,15 @@ exports.trainersController = {
 
     // Removes a trainee from this trainer but keeps the trainee's account.
     async unassignTrainee(req, res) {
+        const { trainerId, traineeId } = req.params;
+        if (isInvalidId(trainerId)) {
+            return res.status(400).json({ message: 'Invalid trainerId: must be a positive integer' });
+        }
+        if (isInvalidId(traineeId)) {
+            return res.status(400).json({ message: 'Invalid traineeId: must be a positive integer' });
+        }
         try {
-            await trainersService.unassignTrainee(req.params.trainerId, req.params.traineeId);
+            await trainersService.unassignTrainee(trainerId, traineeId);
             res.status(200).json({ message: 'Trainee unassigned' });
         } catch (error) {
             if (error.status) return res.status(error.status).json({ message: error.message });
@@ -95,8 +132,12 @@ exports.trainersController = {
 
     // Deletes a trainer. Their trainees get unassigned first, then the trainer and user rows are removed.
     async deleteTrainer(req, res) {
+        const { trainerId } = req.params;
+        if (isInvalidId(trainerId)) {
+            return res.status(400).json({ message: 'Invalid trainerId: must be a positive integer' });
+        }
         try {
-            await trainersService.deleteTrainer(req.params.trainerId);
+            await trainersService.deleteTrainer(trainerId);
             res.status(200).json({ message: 'Trainer deleted, trainees unassigned' });
         } catch (error) {
             if (error.status) return res.status(error.status).json({ message: error.message });

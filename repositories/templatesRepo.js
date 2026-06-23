@@ -1,7 +1,30 @@
 const { dbConnection } = require('../db_connection');
 
-// WORKOUT TEMPLATES 
+// WORKOUT TEMPLATES
 exports.templatesRepo = {
+
+    // Confirms a trainer exists, so we can 404 a bad trainer_id up front instead
+    // of letting the INSERT blow up on the fk_wt_trainer foreign key (500).
+    async trainerExists(trainerId) {
+        const pool = await dbConnection.createConnection();
+        const [rows] = await pool.execute(
+            'SELECT 1 FROM trainers WHERE trainer_id = ? LIMIT 1',
+            [trainerId]
+        );
+        return rows.length > 0;
+    },
+
+    // Returns the trainee's owning trainer_id (which may be null if unassigned),
+    // or undefined if there's no such trainee. Used on assign to confirm the
+    // trainee both exists and belongs to the template's trainer.
+    async getTraineeTrainerId(traineeId) {
+        const pool = await dbConnection.createConnection();
+        const [rows] = await pool.execute(
+            'SELECT trainer_id FROM trainees WHERE trainee_id = ?',
+            [traineeId]
+        );
+        return rows.length ? rows[0].trainer_id : undefined;
+    },
 
     // Counts how many workout templates a trainer already has (for the cap check).
     async countWorkoutTemplates(trainerId) {
@@ -36,7 +59,7 @@ exports.templatesRepo = {
     async getWorkoutTemplateRowsById(templateId) {
         const pool = await dbConnection.createConnection();
         const [rows] = await pool.execute(
-            `SELECT t.template_id, t.name, t.mode, t.goal, t.created_at,
+            `SELECT t.template_id, t.trainer_id, t.name, t.mode, t.goal, t.created_at,
                     b.block_id, b.block_index, b.label, b.block_type, b.notes,
                     e.id AS exercise_row_id, e.exercise_id, e.custom_exercise_name,
                     e.sets, e.reps, e.rest_seconds
@@ -236,7 +259,7 @@ exports.templatesRepo = {
     async getMealTemplateRowsById(templateId) {
         const pool = await dbConnection.createConnection();
         const [rows] = await pool.execute(
-            `SELECT t.template_id, t.name, t.created_at,
+            `SELECT t.template_id, t.trainer_id, t.name, t.created_at,
                     s.slot_id, s.slot_index, s.slot_label,
                     o.option_id, o.mealdb_id, o.meal_name, o.meal_thumb, o.notes,
                     o.quantity, o.unit, o.calories_per_100, o.protein_per_100,

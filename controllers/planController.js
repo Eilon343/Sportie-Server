@@ -1,5 +1,6 @@
 const planGeneratorService = require('../services/planGeneratorService');
 const { planService } = require('../services/planService');
+const { isInvalidId } = require('../utils/validation');
 
 exports.planController = {
   // Builds a workout plan from the user's goal and preferences (doesn't save it yet).
@@ -25,6 +26,9 @@ exports.planController = {
   async savePlan(req, res) {
     const { traineeId, goal, daysPerWeek, days } = req.body;
     if (!traineeId) return res.status(400).json({ message: 'Field "traineeId" is required' });
+    if (isInvalidId(String(traineeId))) {
+      return res.status(400).json({ message: 'Invalid traineeId: must be a positive integer' });
+    }
 
     try {
       const planId = await planService.savePlan({ traineeId, goal, daysPerWeek, days });
@@ -35,6 +39,7 @@ exports.planController = {
         planId: planId,
       });
     } catch (error) {
+      if (error.status) return res.status(error.status).json({ message: error.message });
       console.error('Error saving plan:', error);
       res.status(500).json({ message: 'Error saving plan: ' + error.message });
     }
@@ -44,7 +49,9 @@ exports.planController = {
   async getActivePlan(req, res) {
     try {
       const { traineeId } = req.params;
-      if (!traineeId) return res.status(400).json({ message: 'Field "traineeId" is required' });
+      if (isInvalidId(traineeId)) {
+        return res.status(400).json({ message: 'Invalid traineeId: must be a positive integer' });
+      }
 
       const plan = await planService.getActivePlan(traineeId);
       if (!plan) {
@@ -61,7 +68,9 @@ exports.planController = {
   async getPlanById(req, res) {
     try {
       const { planId } = req.params;
-      if (!planId) return res.status(400).json({ message: 'Parameter "planId" is required' });
+      if (isInvalidId(planId)) {
+        return res.status(400).json({ message: 'Invalid planId: must be a positive integer' });
+      }
 
       const plan = await planService.getPlanById(planId);
       if (!plan) return res.status(404).json({ message: 'Plan not found' });
@@ -78,9 +87,14 @@ exports.planController = {
     try {
       const { planId } = req.params;
       const { goal, daysPerWeek, days } = req.body;
-      if (!planId) return res.status(400).json({ message: 'Parameter "planId" is required' });
+      if (isInvalidId(planId)) {
+        return res.status(400).json({ message: 'Invalid planId: must be a positive integer' });
+      }
 
-      await planService.updatePlan(planId, { goal, daysPerWeek, days });
+      const updated = await planService.updatePlan(planId, { goal, daysPerWeek, days });
+      if (!updated) {
+        return res.status(404).json({ message: 'Plan not found' });
+      }
 
       res.status(200).json({
         success: true,

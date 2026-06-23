@@ -1,10 +1,15 @@
 const { traineesService } = require('../services/traineesService');
+const { isInvalidId } = require('../utils/validation');
 
 exports.traineesController = {
     // Gets all the trainees that belong to one trainer. Used by the dashboard.
     async getTraineesByTrainer(req, res) {
+        const { trainerId } = req.params;
+        if (isInvalidId(trainerId)) {
+            return res.status(400).json({ message: 'Invalid trainerId: must be a positive integer' });
+        }
         try {
-            const rows = await traineesService.getTraineesByTrainer(req.params.trainerId);
+            const rows = await traineesService.getTraineesByTrainer(trainerId);
             if (rows.length === 0) {
                 return res.status(404).json({ message: 'No trainees found for this trainer' });
             }
@@ -17,8 +22,12 @@ exports.traineesController = {
 
     // Gets a single trainee by id, or 404 if not found.
     async getTraineeById(req, res) {
+        const { traineeId } = req.params;
+        if (isInvalidId(traineeId)) {
+            return res.status(400).json({ message: 'Invalid traineeId: must be a positive integer' });
+        }
         try {
-            const trainee = await traineesService.getTraineeById(req.params.traineeId);
+            const trainee = await traineesService.getTraineeById(traineeId);
             if (!trainee) {
                 return res.status(404).json({ message: 'Trainee not found' });
             }
@@ -32,8 +41,12 @@ exports.traineesController = {
     // Lets a trainee edit their own profile. Only safe fields like name, contact, goal, avatar
     // are allowed here, not status/progress/trainer/weight.
     async updateOwnProfile(req, res) {
+        const { traineeId } = req.params;
+        if (isInvalidId(traineeId)) {
+            return res.status(400).json({ message: 'Invalid traineeId: must be a positive integer' });
+        }
         try {
-            const updated = await traineesService.updateOwnProfile(req.params.traineeId, req.body);
+            const updated = await traineesService.updateOwnProfile(traineeId, req.body);
             if (!updated) {
                 return res.status(404).json({ message: 'Trainee not found' });
             }

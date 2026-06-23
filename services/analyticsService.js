@@ -13,7 +13,10 @@ function formatIsoWeek(yearweek) {
 
 exports.analyticsService = {
     // Lists trainees who haven't trained in a while so the trainer can follow up.
+    // Returns null when the trainer id doesn't exist so the controller can 404
+    // (an empty array is a valid result: a real trainer with nobody at risk).
     async getAtRisk(trainerId) {
+        if (!(await analyticsRepo.trainerExists(trainerId))) return null;
         const rows = await analyticsRepo.atRisk(trainerId);
         return rows.map((r) => ({
             trainee_id: r.trainee_id,
@@ -24,7 +27,9 @@ exports.analyticsService = {
     },
 
     // Groups trainees into attendance buckets (<50%, 50-80%, 80+%) and counts how many fall in each.
+    // Returns null for an unknown trainer id so the controller can 404 instead of 200.
     async getAttendanceDistribution(trainerId) {
+        if (!(await analyticsRepo.trainerExists(trainerId))) return null;
         const rows = await analyticsRepo.attendanceRaw(trainerId);
         const buckets = { '<50': 0, '50-80': 0, '80+': 0 };
         let withoutPlan = 0;
@@ -50,7 +55,9 @@ exports.analyticsService = {
     },
 
     // Ranks trainees by progress, either strength or body weight depending on the metric asked for.
+    // Returns null for an unknown trainer id so the controller can 404 instead of 200.
     async getLeaderboard(trainerId, metric) {
+        if (!(await analyticsRepo.trainerExists(trainerId))) return null;
         const normalized = metric === 'strength' ? 'strength' : 'body_weight';
         const rows = normalized === 'strength'
             ? await analyticsRepo.leaderboardStrength(trainerId)
@@ -70,7 +77,9 @@ exports.analyticsService = {
     },
 
     // Gives total training volume per week so you can chart it over time.
+    // Returns null for an unknown trainer id so the controller can 404 instead of 200.
     async getVolumeOverTime(trainerId) {
+        if (!(await analyticsRepo.trainerExists(trainerId))) return null;
         const rows = await analyticsRepo.volumeOverTime(trainerId);
         return rows.map((r) => ({
             week: formatIsoWeek(r.iso_yearweek),
@@ -79,7 +88,9 @@ exports.analyticsService = {
     },
 
     // Builds a heatmap grid (one row per trainee, one column per week) of session counts.
+    // Returns null for an unknown trainer id so the controller can 404 instead of 200.
     async getEngagementHeatmap(trainerId) {
+        if (!(await analyticsRepo.trainerExists(trainerId))) return null;
         const [roster, rows] = await Promise.all([
             analyticsRepo.listTrainees(trainerId),
             analyticsRepo.engagementHeatmap(trainerId),

@@ -1,10 +1,22 @@
 const { planRepo } = require('../repositories/planRepo');
 const { exerciseRepo } = require('../repositories/exerciseRepo');
 
+// Tagged error so the controller can map it to the right HTTP status (e.g. 404).
+function httpError(status, message) {
+    const err = new Error(message);
+    err.status = status;
+    return err;
+}
+
 exports.planService = {
     // Saves a brand-new training plan plus all its exercises in one transaction.
     // Returns the new plan's id.
     async savePlan({ traineeId, goal, daysPerWeek, days }) {
+        // Checked before the transaction so a bad trainee_id is a clean 404, not an
+        // FK 500 (and not swallowed by the generic catch below).
+        if (!(await planRepo.traineeExists(traineeId))) {
+            throw httpError(404, 'Trainee not found');
+        }
         const exerciseRows = [];
         try {
             for (const day of days) {

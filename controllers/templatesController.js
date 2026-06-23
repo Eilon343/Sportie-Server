@@ -1,4 +1,5 @@
 const { templatesService } = require('../services/templatesService');
+const { isInvalidId } = require('../utils/validation');
 
 exports.templatesController = {
     //  WORKOUT 
@@ -8,6 +9,7 @@ exports.templatesController = {
         try {
             const { trainerId } = req.query;
             if (!trainerId) return res.status(400).json({ message: 'Query "trainerId" is required' });
+            if (isInvalidId(String(trainerId))) return res.status(400).json({ message: 'Invalid trainerId: must be a positive integer' });
 
             const templates = await templatesService.listWorkoutTemplates(trainerId);
             res.status(200).json(templates);
@@ -23,6 +25,7 @@ exports.templatesController = {
             console.log('[DEBUG] saveWorkoutTemplate req.body:', JSON.stringify(req.body)); // DEBUG temp
             const { trainerId, name, mode, goal, blocks } = req.body;
             if (!trainerId) return res.status(400).json({ message: 'Field "trainerId" is required' });
+            if (isInvalidId(String(trainerId))) return res.status(400).json({ message: 'Invalid trainerId: must be a positive integer' });
             if (!name) return res.status(400).json({ message: 'Field "name" is required' });
 
             const templateId = await templatesService.saveWorkoutTemplate({ trainerId, name, mode, goal, blocks });
@@ -38,6 +41,7 @@ exports.templatesController = {
     async deleteWorkoutTemplate(req, res) {
         try {
             const { id } = req.params;
+            if (isInvalidId(id)) return res.status(400).json({ message: 'Invalid template id: must be a positive integer' });
             const deleted = await templatesService.deleteWorkoutTemplate(id);
             if (!deleted) return res.status(404).json({ message: 'Workout template not found' });
             res.status(200).json({ success: true });
@@ -51,7 +55,7 @@ exports.templatesController = {
     async updateWorkoutTemplate(req, res) {
         try {
             const { id } = req.params;
-            if (!/^\d+$/.test(id) || Number(id) <= 0) return res.status(400).json({ message: 'Invalid template id' });
+            if (isInvalidId(id)) return res.status(400).json({ message: 'Invalid template id: must be a positive integer' });
             const { name, mode, goal, blocks } = req.body;
             if (!name) return res.status(400).json({ message: 'Field "name" is required' });
 
@@ -68,8 +72,10 @@ exports.templatesController = {
     async assignWorkoutTemplate(req, res) {
         try {
             const { id } = req.params;
+            if (isInvalidId(id)) return res.status(400).json({ message: 'Invalid template id: must be a positive integer' });
             const { traineeId } = req.body;
             if (!traineeId) return res.status(400).json({ message: 'Field "traineeId" is required' });
+            if (isInvalidId(String(traineeId))) return res.status(400).json({ message: 'Invalid traineeId: must be a positive integer' });
 
             const planId = await templatesService.assignWorkoutTemplate(id, traineeId);
             res.status(201).json({ success: true, planId });
@@ -87,6 +93,7 @@ exports.templatesController = {
         try {
             const { trainerId } = req.query;
             if (!trainerId) return res.status(400).json({ message: 'Query "trainerId" is required' });
+            if (isInvalidId(String(trainerId))) return res.status(400).json({ message: 'Invalid trainerId: must be a positive integer' });
 
             const templates = await templatesService.listMealTemplates(trainerId);
             res.status(200).json(templates);
@@ -102,6 +109,7 @@ exports.templatesController = {
             console.log('[DEBUG] saveMealTemplate req.body:', JSON.stringify(req.body, null, 2)); // DEBUG temp
             const { trainerId, name, slots } = req.body;
             if (!trainerId) return res.status(400).json({ message: 'Field "trainerId" is required' });
+            if (isInvalidId(String(trainerId))) return res.status(400).json({ message: 'Invalid trainerId: must be a positive integer' });
             if (!name) return res.status(400).json({ message: 'Field "name" is required' });
 
             const templateId = await templatesService.saveMealTemplate({ trainerId, name, slots });
@@ -117,6 +125,7 @@ exports.templatesController = {
     async deleteMealTemplate(req, res) {
         try {
             const { id } = req.params;
+            if (isInvalidId(id)) return res.status(400).json({ message: 'Invalid template id: must be a positive integer' });
             const deleted = await templatesService.deleteMealTemplate(id);
             if (!deleted) return res.status(404).json({ message: 'Meal template not found' });
             res.status(200).json({ success: true });
@@ -130,7 +139,7 @@ exports.templatesController = {
     async updateMealTemplate(req, res) {
         try {
             const { id } = req.params;
-            if (!/^\d+$/.test(id) || Number(id) <= 0) return res.status(400).json({ message: 'Invalid template id' });
+            if (isInvalidId(id)) return res.status(400).json({ message: 'Invalid template id: must be a positive integer' });
             const { name, slots } = req.body;
             if (!name) return res.status(400).json({ message: 'Field "name" is required' });
 
@@ -147,8 +156,10 @@ exports.templatesController = {
     async assignMealTemplate(req, res) {
         try {
             const { id } = req.params;
+            if (isInvalidId(id)) return res.status(400).json({ message: 'Invalid template id: must be a positive integer' });
             const { traineeId } = req.body;
             if (!traineeId) return res.status(400).json({ message: 'Field "traineeId" is required' });
+            if (isInvalidId(String(traineeId))) return res.status(400).json({ message: 'Invalid traineeId: must be a positive integer' });
 
             const mealPlanId = await templatesService.assignMealTemplate(id, traineeId);
             res.status(201).json({ success: true, mealPlanId });

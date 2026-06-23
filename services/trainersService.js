@@ -23,7 +23,10 @@ exports.trainersService = {
     },
 
     // Gets how many of this trainer's trainees were active each month.
+    // Returns null if there's no such trainer so the controller can 404.
     async getMonthlyActiveTrainees(trainerId) {
+        const rows = await trainersRepo.findById(trainerId);
+        if (!rows.length) return null;
         return trainersRepo.findMonthlyActivity(trainerId);
     },
 
@@ -80,8 +83,12 @@ exports.trainersService = {
     },
 
     // Assigns an existing trainee to this trainer.
-    // Throws 404 if the trainee doesn't exist, 409 if they already have a trainer.
+    // Throws 404 if the trainer or trainee doesn't exist, 409 if they already have a trainer.
     async assignTrainee(trainerId, traineeId) {
+        // Guard the trainer up front so a bad trainer_id is a 404, not an FK 500.
+        const trainer = await trainersRepo.findById(trainerId);
+        if (!trainer.length) throw httpError(404, 'Trainer not found');
+
         const outcome = await trainersRepo.assignTraineeTx(trainerId, traineeId);
         if (outcome === 'not_found') throw httpError(404, 'Trainee not found. They must sign up first.');
         if (outcome === 'already_assigned') throw httpError(409, 'Trainee is already assigned to a trainer');

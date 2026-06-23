@@ -67,10 +67,24 @@ exports.exerciseController = {
 
   // Gets a single exercise by its id.
   async getExerciseById(req, res) {
+    const { id } = req.params;
+    if (!id || !id.trim()) {
+      return res.status(400).json({ message: 'Parameter "id" is required' });
+    }
     try {
-      const data = await getExerciseById(req.params.id);
+      const data = await getExerciseById(id);
+      // ExerciseDB returns an empty body/array for an unknown id.
+      const empty = !data || (Array.isArray(data) && data.length === 0)
+        || (typeof data === 'object' && !Array.isArray(data) && Object.keys(data).length === 0);
+      if (empty) {
+        return res.status(404).json({ message: 'Exercise not found' });
+      }
       res.status(200).json(data);
     } catch (error) {
+      // The upstream API answers 404 for ids it doesn't recognise — surface that as a 404.
+      if (error.message && error.message.includes('(404)')) {
+        return res.status(404).json({ message: 'Exercise not found' });
+      }
       console.error('Error fetching exercise:', error);
       res.status(500).send('Error fetching exercise: ' + error.message);
     }

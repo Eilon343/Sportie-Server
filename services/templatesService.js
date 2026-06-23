@@ -121,6 +121,9 @@ exports.templatesService = {
 
     // Saves a new workout template, but only if the trainer is under the cap. Returns its id.
     async saveWorkoutTemplate({ trainerId, name, mode, goal, blocks }) {
+        if (!(await templatesRepo.trainerExists(trainerId))) {
+            throw httpError(404, 'Trainer not found');
+        }
         const count = await templatesRepo.countWorkoutTemplates(trainerId);
         if (count >= WORKOUT_TEMPLATE_CAP) {
             throw httpError(409, `Workout template limit reached (${WORKOUT_TEMPLATE_CAP})`);
@@ -146,6 +149,13 @@ exports.templatesService = {
     async assignWorkoutTemplate(templateId, traineeId) {
         const rows = await templatesRepo.getWorkoutTemplateRowsById(templateId);
         if (!rows || rows.length === 0) throw httpError(404, 'Workout template not found');
+
+        // A trainer may only assign their own template to one of their own trainees.
+        const traineeTrainerId = await templatesRepo.getTraineeTrainerId(traineeId);
+        if (traineeTrainerId === undefined) throw httpError(404, 'Trainee not found');
+        if (traineeTrainerId !== rows[0].trainer_id) {
+            throw httpError(403, "Trainee is not managed by this template's trainer");
+        }
 
         const [shaped] = shapeWorkoutTemplates(rows);
         const blocks = shaped.days || shaped.pool || [];
@@ -191,6 +201,9 @@ exports.templatesService = {
 
     // Saves a new meal template, but only if the trainer is under the cap. Returns its id.
     async saveMealTemplate({ trainerId, name, slots }) {
+        if (!(await templatesRepo.trainerExists(trainerId))) {
+            throw httpError(404, 'Trainer not found');
+        }
         const count = await templatesRepo.countMealTemplates(trainerId);
         if (count >= MEAL_TEMPLATE_CAP) {
             throw httpError(409, `Meal template limit reached (${MEAL_TEMPLATE_CAP})`);
@@ -215,6 +228,13 @@ exports.templatesService = {
     async assignMealTemplate(templateId, traineeId) {
         const rows = await templatesRepo.getMealTemplateRowsById(templateId);
         if (!rows || rows.length === 0) throw httpError(404, 'Meal template not found');
+
+        // A trainer may only assign their own template to one of their own trainees.
+        const traineeTrainerId = await templatesRepo.getTraineeTrainerId(traineeId);
+        if (traineeTrainerId === undefined) throw httpError(404, 'Trainee not found');
+        if (traineeTrainerId !== rows[0].trainer_id) {
+            throw httpError(403, "Trainee is not managed by this template's trainer");
+        }
 
         const [shaped] = shapeMealTemplates(rows);
         return templatesRepo.assignMealTemplateTx(traineeId, templateId, {

@@ -30,8 +30,13 @@ exports.mealController = {
 
   // Gets meals whose name starts with a given letter.
   async searchByFirstLetter(req, res) {
+    const { letter } = req.params;
+    // TheMealDB's f= filter expects exactly one alphabetic character.
+    if (!/^[a-zA-Z]$/.test(letter)) {
+      return res.status(400).json({ message: 'Parameter "letter" must be a single letter (a-z)' });
+    }
     try {
-      const meals = await searchByFirstLetter(req.params.letter);
+      const meals = await searchByFirstLetter(letter);
       res.status(200).json(meals);
     } catch (error) {
       console.error('Error fetching meals by letter:', error);
@@ -41,8 +46,13 @@ exports.mealController = {
 
   // Gets a single meal by its id, or 404 if it doesn't exist.
   async getMealById(req, res) {
+    const { id } = req.params;
+    // TheMealDB meal ids are numeric.
+    if (!/^\d+$/.test(id)) {
+      return res.status(400).json({ message: 'Invalid meal id: must be numeric' });
+    }
     try {
-      const meal = await getMealById(req.params.id);
+      const meal = await getMealById(id);
       if (!meal) {
         return res.status(404).json({ message: 'Meal not found' });
       }
