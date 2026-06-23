@@ -27,4 +27,8 @@ templatesRoutes.delete('/meal/:id', templatesController.deleteMealTemplate);
 // Assign a meal template to a trainee as a new active meal plan.
 templatesRoutes.post('/meal/:id/assign', templatesController.assignMealTemplate);
 
+//  Assigned meal plan (trainee-facing)
+// Get a trainee's active meal plan with its day-total macros (for display).
+templatesRoutes.get('/meal-plan/:traineeId', templatesController.getActiveMealPlan);
+
 module.exports = templatesRoutes;

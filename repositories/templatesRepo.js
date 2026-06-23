@@ -275,14 +275,17 @@ exports.templatesRepo = {
     },
 
     // Saves a whole meal template (template -> slots -> options) in one transaction.
-    async saveMealTemplateTx(trainerId, { name, slots }) {
+    async saveMealTemplateTx(trainerId, { name, slots, totals }) {
+        const t = totals || {};
         const connection = await dbConnection.createConnection();
         try {
             await connection.beginTransaction();
 
             const [tplResult] = await connection.execute(
-                `INSERT INTO meal_templates (trainer_id, name) VALUES (?, ?)`,
-                [trainerId, name ?? null]
+                `INSERT INTO meal_templates
+                    (trainer_id, name, total_calories, total_protein, total_carbs, total_fat)
+                 VALUES (?, ?, ?, ?, ?, ?)`,
+                [trainerId, name ?? null, t.calories ?? 0, t.protein ?? 0, t.carbs ?? 0, t.fat ?? 0]
             );
             const templateId = tplResult.insertId;
 
@@ -333,7 +336,8 @@ exports.templatesRepo = {
 
     // Edits a meal template in place (delete-and-reinsert, mirroring planRepo.updatePlanTx).
     // Returns false if the template doesn't exist (so the caller can 404), true otherwise.
-    async updateMealTemplateTx(templateId, { name, slots }) {
+    async updateMealTemplateTx(templateId, { name, slots, totals }) {
+        const t = totals || {};
         const connection = await dbConnection.createConnection();
         try {
             await connection.beginTransaction();
@@ -348,8 +352,10 @@ exports.templatesRepo = {
             }
 
             await connection.execute(
-                `UPDATE meal_templates SET name = ? WHERE template_id = ?`,
-                [name ?? null, templateId]
+                `UPDATE meal_templates
+                 SET name = ?, total_calories = ?, total_protein = ?, total_carbs = ?, total_fat = ?
+                 WHERE template_id = ?`,
+                [name ?? null, t.calories ?? 0, t.protein ?? 0, t.carbs ?? 0, t.fat ?? 0, templateId]
             );
 
             // Drop the old slots; the FK cascade clears their options too.
@@ -392,9 +398,24 @@ exports.templatesRepo = {
         }
     },
 
+    // Reads a trainee's active meal plan with its stored day-total macros (for display).
+    async getActiveMealPlan(traineeId) {
+        const pool = await dbConnection.createConnection();
+        const [rows] = await pool.execute(
+            `SELECT meal_plan_id, name, created_at,
+                    total_calories, total_protein, total_carbs, total_fat
+             FROM meal_plans
+             WHERE trainee_id = ? AND is_active = 1
+             LIMIT 1`,
+            [traineeId]
+        );
+        return rows.length ? rows[0] : null;
+    },
+
     // Copy-on-assign for meals, fully atomic: deactivate the trainee's current meal plan,
     // then create a new active meal_plan with all slots+options copied from the template.
-    async assignMealTemplateTx(traineeId, sourceTemplateId, { name, slots }) {
+    async assignMealTemplateTx(traineeId, sourceTemplateId, { name, slots, totals }) {
+        const t = totals || {};
         const connection = await dbConnection.createConnection();
         try {
             await connection.beginTransaction();
@@ -406,8 +427,12 @@ exports.templatesRepo = {
             );
 
             const [planResult] = await connection.execute(
-                `INSERT INTO meal_plans (trainee_id, name, source_template_id, is_active) VALUES (?, ?, ?, 1)`,
-                [traineeId, name, sourceTemplateId ?? null]
+                `INSERT INTO meal_plans
+                    (trainee_id, name, source_template_id, is_active,
+                     total_calories, total_protein, total_carbs, total_fat)
+                 VALUES (?, ?, ?, 1, ?, ?, ?, ?)`,
+                [traineeId, name, sourceTemplateId ?? null,
+                 t.calories ?? 0, t.protein ?? 0, t.carbs ?? 0, t.fat ?? 0]
             );
             const mealPlanId = planResult.insertId;
 

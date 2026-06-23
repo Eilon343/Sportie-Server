@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { dbConnection } = require('./db_connection');
+const { dbConnection } = require('../db_connection');
 
 // Throwaway, read-only script: checks the Templates feature DB state — whether the
 // is_active columns exist (migration 005), what real template ids/owners are there,

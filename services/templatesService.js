@@ -110,7 +110,61 @@ function shapeMealTemplates(rows) {
     }));
 }
 
-//  WORKOUT 
+//  MACROS
+// Day-total macros for a meal plan/template. Slots are "pick one", so each slot
+// contributes the AVERAGE of its options; the day total is the sum of those averages.
+// One option's macro = per_100 * quantity / 100, with null/0 quantity counting as 0.
+const MACRO_KEYS = ['calories', 'protein', 'carbs', 'fat'];
+
+function scaleByQuantity(per100, quantity) {
+    const q = Number(quantity);
+    const p = Number(per100);
+    if (!q || q <= 0 || !p) return 0;          // missing quantity (or value) => 0
+    return (p * q) / 100;
+}
+
+// slotOptionMacros: array of slots, each an array of per-option {calories,protein,carbs,fat}.
+function sumDayMacros(slotOptionMacros) {
+    const total = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+    for (const options of slotOptionMacros) {
+        if (!options.length) continue;          // empty slot adds nothing (no divide-by-zero)
+        for (const key of MACRO_KEYS) {
+            const slotAvg = options.reduce((sum, o) => sum + o[key], 0) / options.length;
+            total[key] += slotAvg;
+        }
+    }
+    for (const key of MACRO_KEYS) total[key] = Math.round(total[key] * 100) / 100; // 2 dp
+    return total;
+}
+
+// From the SAVE/UPDATE payload shape: option = { per100g:{calories,...}, quantity }.
+// Only named options are persisted, so only they count toward the total.
+function macrosFromPayload(slots) {
+    return sumDayMacros((slots || []).map((slot) =>
+        (slot.options || [])
+            .filter((o) => o.name != null && o.name !== '')
+            .map((o) => ({
+                calories: scaleByQuantity(o.per100g?.calories, o.quantity),
+                protein: scaleByQuantity(o.per100g?.protein, o.quantity),
+                carbs: scaleByQuantity(o.per100g?.carbs, o.quantity),
+                fat: scaleByQuantity(o.per100g?.fat, o.quantity),
+            }))
+    ));
+}
+
+// From the shaped/DB option shape: option = { calories_per_100,..., quantity }.
+function macrosFromShaped(slots) {
+    return sumDayMacros((slots || []).map((slot) =>
+        (slot.options || []).map((o) => ({
+            calories: scaleByQuantity(o.calories_per_100, o.quantity),
+            protein: scaleByQuantity(o.protein_per_100, o.quantity),
+            carbs: scaleByQuantity(o.carbs_per_100, o.quantity),
+            fat: scaleByQuantity(o.fat_per_100, o.quantity),
+        }))
+    ));
+}
+
+//  WORKOUT
 exports.templatesService = {
 
     // Lists a trainer's workout templates, shaped for the frontend mapWorkoutTemplate.
@@ -208,7 +262,8 @@ exports.templatesService = {
         if (count >= MEAL_TEMPLATE_CAP) {
             throw httpError(409, `Meal template limit reached (${MEAL_TEMPLATE_CAP})`);
         }
-        return templatesRepo.saveMealTemplateTx(trainerId, { name, slots: slots || [] });
+        const totals = macrosFromPayload(slots);
+        return templatesRepo.saveMealTemplateTx(trainerId, { name, slots: slots || [], totals });
     },
 
     // Deletes a meal template (cascades to slots/options). Returns rows deleted.
@@ -218,7 +273,8 @@ exports.templatesService = {
 
     // Edits an existing meal template in place. 404s if the id doesn't exist.
     async updateMealTemplate(templateId, { name, slots }) {
-        const ok = await templatesRepo.updateMealTemplateTx(templateId, { name, slots: slots || [] });
+        const totals = macrosFromPayload(slots);
+        const ok = await templatesRepo.updateMealTemplateTx(templateId, { name, slots: slots || [], totals });
         if (!ok) throw httpError(404, 'Template not found');
         return true;
     },
@@ -237,9 +293,29 @@ exports.templatesService = {
         }
 
         const [shaped] = shapeMealTemplates(rows);
+        // Recompute from the shaped slots so totals are correct even for templates
+        // saved before macro totals existed.
+        const totals = macrosFromShaped(shaped.slots);
         return templatesRepo.assignMealTemplateTx(traineeId, templateId, {
             name: shaped.name,
-            slots: shaped.slots
+            slots: shaped.slots,
+            totals
         });
+    },
+
+    // Returns the trainee's active meal plan with its day-total macros (for display),
+    // or null if they have no active meal plan.
+    async getActiveMealPlan(traineeId) {
+        const row = await templatesRepo.getActiveMealPlan(traineeId);
+        if (!row) return null;
+        return {
+            meal_plan_id: row.meal_plan_id,
+            name: row.name,
+            created_at: row.created_at,
+            total_calories: Number(row.total_calories),
+            total_protein: Number(row.total_protein),
+            total_carbs: Number(row.total_carbs),
+            total_fat: Number(row.total_fat),
+        };
     }
 };

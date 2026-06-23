@@ -1,12 +1,5 @@
 use sportieDb;
 
--- ===========================================================================
--- TRAINEE MEAL PLANS (plan -> slots -> options)
--- The assign target for meal templates, mirroring how training_plans is the
--- target for workout templates. Assigning a meal_template copies it into these
--- tables for one trainee. Structure mirrors meal_template_* + the 003 macros.
--- ===========================================================================
-
 -- 1. meal_plans: an assigned meal plan owned by ONE trainee (a copy of a template).
 create table if not exists meal_plans (
     meal_plan_id       bigint auto_increment primary key,

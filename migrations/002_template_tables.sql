@@ -1,9 +1,5 @@
 use sportieDb;
 
--- ===========================================================================
--- WORKOUT TEMPLATES (template -> blocks -> exercises)
--- ===========================================================================
-
 -- 1. workout_templates: a reusable workout template owned by a trainer.
 create table if not exists workout_templates (
     template_id bigint auto_increment primary key,
