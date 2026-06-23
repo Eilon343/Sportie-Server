@@ -32,9 +32,9 @@ exports.analyticsRepo = {
     },
 
     // Counts the trainer's trainees' COMPLETED workouts in the current week
-    // (Sunday -> Saturday). DAYOFWEEK() returns 1 for Sunday, so subtracting
-    // (DAYOFWEEK - 1) days from today lands on this week's Sunday; the range is
-    // [Sunday 00:00, next Sunday 00:00) so it covers through Saturday night.
+    // (Sunday -> Saturday). YEARWEEK(..., 2) is Sunday-start, so a session is "this
+    // week" when its year-week equals today's year-week. Matches the Sun-Sat weeks
+    // used everywhere else in analytics.
     async workoutsThisWeek(trainerId) {
         const rows = await runQuery(
             `SELECT COUNT(*) AS workouts_this_week
@@ -42,8 +42,7 @@ exports.analyticsRepo = {
              JOIN trainees t ON t.trainee_id = ws.trainee_id
              WHERE t.trainer_id = ?
                AND ws.status = 'completed'
-               AND ws.performed_at >= (CURDATE() - INTERVAL (DAYOFWEEK(CURDATE()) - 1) DAY)
-               AND ws.performed_at <  (CURDATE() - INTERVAL (DAYOFWEEK(CURDATE()) - 1) DAY + INTERVAL 7 DAY)`,
+               AND YEARWEEK(ws.performed_at, 2) = YEARWEEK(CURDATE(), 2)`,
             [trainerId]
         );
         return rows[0].workouts_this_week;
