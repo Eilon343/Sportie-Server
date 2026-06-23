@@ -21,6 +21,25 @@ exports.analyticsController = {
         }
     },
 
+    // Total completed workouts this week (Sun-Sat) for the trainer's trainees. Dashboard tile.
+    //GET /api/analytics/workouts-this-week/:trainerId
+    async getWorkoutsThisWeek(req, res) {
+        const { trainerId } = req.params;
+        if (isInvalidId(trainerId)) {
+            return res.status(400).json({ message: 'Invalid trainerId: must be a positive integer' });
+        }
+        try {
+            const data = await analyticsService.getWorkoutsThisWeek(trainerId);
+            if (data === null) {
+                return res.status(404).json({ message: 'Trainer not found' });
+            }
+            res.status(200).json(data);
+        } catch (error) {
+            console.error('Error fetching workouts this week:', error);
+            res.status(500).send('Error fetching workouts this week: ' + error.message);
+        }
+    },
+
     // Shows how the trainer's trainees are spread out by attendance. Used for charts.
     //GET /api/analytics/attendance-distribution/:trainerId
     async getAttendanceDistribution(req, res) {

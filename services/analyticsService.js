@@ -4,7 +4,8 @@ const { analyticsRepo } = require('../repositories/analyticsRepo');
 // does thresholds, bucketing, week formatting and DTO shaping.
 
 // Turns a MySQL YEARWEEK number like 202624 into a readable "2026-W24" label.
-function formatIsoWeek(yearweek) {
+// Weeks are Sunday-start (YEARWEEK mode 2) to match the rest of the app.
+function formatWeekLabel(yearweek) {
     const s = String(yearweek);
     const year = s.slice(0, 4);
     const week = s.slice(4).padStart(2, '0');
@@ -24,6 +25,14 @@ exports.analyticsService = {
             last_completed_at: r.last_completed_at,           // null = never completed a session
             days_since: r.days_since === null ? null : Number(r.days_since),
         }));
+    },
+
+    // Total completed workouts this week (Sun-Sat) across the trainer's trainees.
+    // Returns null for an unknown trainer id so the controller can 404.
+    async getWorkoutsThisWeek(trainerId) {
+        if (!(await analyticsRepo.trainerExists(trainerId))) return null;
+        const count = await analyticsRepo.workoutsThisWeek(trainerId);
+        return { workouts_this_week: Number(count) };
     },
 
     // Groups trainees into attendance buckets (<50%, 50-80%, 80+%) and counts how many fall in each.
@@ -82,7 +91,7 @@ exports.analyticsService = {
         if (!(await analyticsRepo.trainerExists(trainerId))) return null;
         const rows = await analyticsRepo.volumeOverTime(trainerId);
         return rows.map((r) => ({
-            week: formatIsoWeek(r.iso_yearweek),
+            week: formatWeekLabel(r.yearweek),
             total_volume: Number(r.total_volume),
         }));
     },
@@ -97,15 +106,15 @@ exports.analyticsService = {
         ]);
 
         // Distinct weeks present, ascending -> column order.
-        const weekSet = new Set(rows.map((r) => r.iso_yearweek));
+        const weekSet = new Set(rows.map((r) => r.yearweek));
         const weeks = [...weekSet].sort((a, b) => a - b);
-        const weekLabels = weeks.map(formatIsoWeek);
+        const weekLabels = weeks.map(formatWeekLabel);
 
-        // counts[trainee_id][iso_yearweek] = session_count
+        // counts[trainee_id][yearweek] = session_count
         const counts = new Map();
         for (const r of rows) {
             if (!counts.has(r.trainee_id)) counts.set(r.trainee_id, {});
-            counts.get(r.trainee_id)[r.iso_yearweek] = Number(r.session_count);
+            counts.get(r.trainee_id)[r.yearweek] = Number(r.session_count);
         }
 
         const grid = roster.map((t) => ({

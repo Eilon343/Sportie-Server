@@ -31,6 +31,24 @@ exports.analyticsRepo = {
         );
     },
 
+    // Counts the trainer's trainees' COMPLETED workouts in the current week
+    // (Sunday -> Saturday). DAYOFWEEK() returns 1 for Sunday, so subtracting
+    // (DAYOFWEEK - 1) days from today lands on this week's Sunday; the range is
+    // [Sunday 00:00, next Sunday 00:00) so it covers through Saturday night.
+    async workoutsThisWeek(trainerId) {
+        const rows = await runQuery(
+            `SELECT COUNT(*) AS workouts_this_week
+             FROM workout_sessions ws
+             JOIN trainees t ON t.trainee_id = ws.trainee_id
+             WHERE t.trainer_id = ?
+               AND ws.status = 'completed'
+               AND ws.performed_at >= (CURDATE() - INTERVAL (DAYOFWEEK(CURDATE()) - 1) DAY)
+               AND ws.performed_at <  (CURDATE() - INTERVAL (DAYOFWEEK(CURDATE()) - 1) DAY + INTERVAL 7 DAY)`,
+            [trainerId]
+        );
+        return rows[0].workouts_this_week;
+    },
+
     // Finds trainees who haven't finished a workout in the last 7 days (or ever).
     // Sorts the most overdue first so never-trained people show up at the top.
     async atRisk(trainerId) {
@@ -146,10 +164,10 @@ exports.analyticsRepo = {
     },
 
     // Adds up total lifted volume (weight*reps) across the trainer's finished sessions,
-    // grouped by week. YEARWEEK(..., 3) just means ISO weeks (Monday start).
+    // grouped by week. YEARWEEK(..., 2) means Sunday-start weeks (Sun-Sat), 1-53.
     async volumeOverTime(trainerId) {
         return runQuery(
-            `SELECT YEARWEEK(ws.performed_at, 3) AS iso_yearweek,
+            `SELECT YEARWEEK(ws.performed_at, 2) AS yearweek,
                     SUM(ls.weight * ls.reps)     AS total_volume
              FROM logged_sets ls
              JOIN workout_sessions ws ON ws.session_id = ls.session_id
@@ -157,8 +175,8 @@ exports.analyticsRepo = {
              WHERE t.trainer_id = ?
                AND ws.status = 'completed'
                AND ws.performed_at IS NOT NULL
-             GROUP BY YEARWEEK(ws.performed_at, 3)
-             ORDER BY iso_yearweek ASC`,
+             GROUP BY YEARWEEK(ws.performed_at, 2)
+             ORDER BY yearweek ASC`,
             [trainerId]
         );
     },
@@ -169,15 +187,15 @@ exports.analyticsRepo = {
         return runQuery(
             `SELECT t.trainee_id,
                     t.name,
-                    YEARWEEK(ws.performed_at, 3) AS iso_yearweek,
+                    YEARWEEK(ws.performed_at, 2) AS yearweek,
                     COUNT(*)                     AS session_count
              FROM trainees t
              JOIN workout_sessions ws ON ws.trainee_id = t.trainee_id
              WHERE t.trainer_id = ?
                AND ws.status = 'completed'
                AND ws.performed_at >= (NOW() - INTERVAL 12 WEEK)
-             GROUP BY t.trainee_id, t.name, YEARWEEK(ws.performed_at, 3)
-             ORDER BY t.trainee_id, iso_yearweek`,
+             GROUP BY t.trainee_id, t.name, YEARWEEK(ws.performed_at, 2)
+             ORDER BY t.trainee_id, yearweek`,
             [trainerId]
         );
     },

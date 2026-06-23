@@ -3,6 +3,8 @@ const { analyticsController } = require('../controllers/analyticsController');
 
 const analyticsRouter = Router();
 
+// Total completed workouts this week (Sun-Sat) across the trainer's trainees. Dashboard tile.
+analyticsRouter.get('/workouts-this-week/:trainerId', analyticsController.getWorkoutsThisWeek);
 // List the trainer's trainees who might be slipping / at risk of dropping off.
 analyticsRouter.get('/at-risk/:trainerId', analyticsController.getAtRisk);
 // Show how the trainer's trainees are spread out by attendance.
