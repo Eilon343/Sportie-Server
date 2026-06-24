@@ -104,5 +104,21 @@ exports.planController = {
       console.error('Error updating plan:', error);
       res.status(500).json({ message: 'Error updating plan: ' + error.message });
     }
-  }
+  },
+
+  // GET /api/plans/meal-plan/:traineeId — the trainee's active meal plan + day-total macros.
+  async getActiveMealPlan(req, res) {
+    try {
+      const { traineeId } = req.params;
+      if (isInvalidId(traineeId)) {
+        return res.status(400).json({ message: 'Invalid traineeId: must be a positive integer' });
+      }
+      const plan = await templatesService.getActiveMealPlan(traineeId);
+      if (!plan) return res.status(404).json({ message: 'No active meal plan for this trainee' });
+      res.status(200).json(plan);
+    } catch (error) {
+      console.error('Error fetching active meal plan:', error);
+      res.status(500).json({ message: 'Error fetching active meal plan: ' + error.message });
+    }
+  },
 };
