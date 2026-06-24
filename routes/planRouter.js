@@ -15,6 +15,8 @@ planRouter.get('/:planId', planController.getPlanById);
 planRouter.put('/:planId', planController.updatePlan);
 // Get a trainee's active meal plan with its day-total macros.
 planRouter.get('/meal-plan/:traineeId', planController.getActiveMealPlan);
+// Update an existing meal plan's name, slots and options.
+planRouter.put('/meal-plan/:planId', planController.updateMealPlan);
 
 
 module.exports = planRouter;

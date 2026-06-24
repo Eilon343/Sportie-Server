@@ -8,6 +8,25 @@ function httpError(status, message) {
     return err;
 }
 
+// Computes day-total macros for a meal plan. Slots are "pick one" so each slot
+// contributes the average of its options; the day total is the sum of those averages.
+function calcMealPlanTotals(slots) {
+    const KEYS = ['calories', 'protein', 'carbs', 'fat'];
+    const total = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+    for (const slot of (slots || [])) {
+        const opts = (slot.options || []).filter(o => o.name);
+        if (!opts.length) continue;
+        for (const key of KEYS) {
+            const slotAvg = opts.reduce((sum, o) => {
+                return sum + (Number(o[`${key}_per_100`] || o.per100?.[key] || 0) * Number(o.quantity || 0) / 100);
+            }, 0) / opts.length;
+            total[key] += slotAvg;
+        }
+    }
+    for (const key of KEYS) total[key] = Math.round(total[key] * 100) / 100;
+    return total;
+}
+
 exports.planService = {
     // Saves a brand-new training plan plus all its exercises in one transaction.
     // Returns the new plan's id.
@@ -175,5 +194,57 @@ exports.planService = {
         }
 
         return await planRepo.updatePlanTx(planId, { goal, daysPerWeek }, exerciseRows);
-    }
+    },
+
+    // Updates a meal plan's name, slots and options, recomputing macros, then persists atomically.
+    async updateMealPlan(planId, { name, slots }) {
+        const totals = calcMealPlanTotals(slots);
+        return planRepo.updateMealPlanTx(planId, { name, slots, totals });
+    },
+
+    // Returns the trainee's active meal plan with macros + full slots/options (for display/edit),
+    // or null if they have no active meal plan.
+    async getActiveMealPlan(traineeId) {
+        const rows = await planRepo.getActiveMealPlan(traineeId);
+        if (!rows) return null;
+
+        const first = rows[0];
+        const plan = {
+            meal_plan_id: first.meal_plan_id,
+            name: first.name,
+            created_at: first.created_at,
+            total_calories: Number(first.total_calories),
+            total_protein: Number(first.total_protein),
+            total_carbs: Number(first.total_carbs),
+            total_fat: Number(first.total_fat),
+            slots: [],
+        };
+
+        const slotsMap = new Map();
+        for (const row of rows) {
+            if (row.slot_id == null) continue;
+            if (!slotsMap.has(row.slot_id)) {
+                slotsMap.set(row.slot_id, {
+                    slot_index: row.slot_index,
+                    label: row.slot_label,
+                    options: [],
+                });
+            }
+            if (row.option_id != null) {
+                slotsMap.get(row.slot_id).options.push({
+                    name: row.meal_name,
+                    thumb: row.meal_thumb,
+                    notes: row.notes,
+                    quantity: Number(row.quantity),
+                    unit: row.unit,
+                    calories_per_100: Number(row.calories_per_100),
+                    protein_per_100: Number(row.protein_per_100),
+                    carbs_per_100: Number(row.carbs_per_100),
+                    fat_per_100: Number(row.fat_per_100),
+                });
+            }
+        }
+        plan.slots = Array.from(slotsMap.values());
+        return plan;
+    },
 };

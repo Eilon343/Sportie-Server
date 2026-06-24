@@ -106,6 +106,23 @@ exports.planController = {
     }
   },
 
+  // PUT /api/plans/meal-plan/:planId — update an existing meal plan's name, slots and options.
+  async updateMealPlan(req, res) {
+    try {
+      const { planId } = req.params;
+      if (isInvalidId(planId)) {
+        return res.status(400).json({ message: 'Invalid planId: must be a positive integer' });
+      }
+      const { name, slots } = req.body;
+      const updated = await planService.updateMealPlan(planId, { name, slots: slots || [] });
+      if (!updated) return res.status(404).json({ message: 'Meal plan not found' });
+      res.status(200).json({ success: true, message: 'Meal plan updated successfully' });
+    } catch (error) {
+      console.error('Error updating meal plan:', error);
+      res.status(500).json({ message: 'Error updating meal plan: ' + error.message });
+    }
+  },
+
   // GET /api/plans/meal-plan/:traineeId — the trainee's active meal plan + day-total macros.
   async getActiveMealPlan(req, res) {
     try {
@@ -113,7 +130,7 @@ exports.planController = {
       if (isInvalidId(traineeId)) {
         return res.status(400).json({ message: 'Invalid traineeId: must be a positive integer' });
       }
-      const plan = await templatesService.getActiveMealPlan(traineeId);
+      const plan = await planService.getActiveMealPlan(traineeId);
       if (!plan) return res.status(404).json({ message: 'No active meal plan for this trainee' });
       res.status(200).json(plan);
     } catch (error) {

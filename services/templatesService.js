@@ -302,20 +302,4 @@ exports.templatesService = {
             totals
         });
     },
-
-    // Returns the trainee's active meal plan with its day-total macros (for display),
-    // or null if they have no active meal plan.
-    async getActiveMealPlan(traineeId) {
-        const row = await templatesRepo.getActiveMealPlan(traineeId);
-        if (!row) return null;
-        return {
-            meal_plan_id: row.meal_plan_id,
-            name: row.name,
-            created_at: row.created_at,
-            total_calories: Number(row.total_calories),
-            total_protein: Number(row.total_protein),
-            total_carbs: Number(row.total_carbs),
-            total_fat: Number(row.total_fat),
-        };
-    }
 };

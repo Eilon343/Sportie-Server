@@ -398,20 +398,6 @@ exports.templatesRepo = {
         }
     },
 
-    // Reads a trainee's active meal plan with its stored day-total macros (for display).
-    async getActiveMealPlan(traineeId) {
-        const pool = await dbConnection.createConnection();
-        const [rows] = await pool.execute(
-            `SELECT meal_plan_id, name, created_at,
-                    total_calories, total_protein, total_carbs, total_fat
-             FROM meal_plans
-             WHERE trainee_id = ? AND is_active = 1
-             LIMIT 1`,
-            [traineeId]
-        );
-        return rows.length ? rows[0] : null;
-    },
-
     // Copy-on-assign for meals, fully atomic: deactivate the trainee's current meal plan,
     // then create a new active meal_plan with all slots+options copied from the template.
     async assignMealTemplateTx(traineeId, sourceTemplateId, { name, slots, totals }) {
