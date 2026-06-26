@@ -4,13 +4,29 @@ const { dbConnection } = require('../db_connection');
 // including the password hash, so the service has to keep that out of any response.
 
 exports.authRepo = {
-    // Adds a new user (email, password hash, role) into the users table.
-    async insertUser(email, hashedPassword, role) {
-        const pool = await dbConnection.createConnection();
-        await pool.execute(
-            'INSERT INTO users (email, password, role) VALUES (?, ?, ?)',
-            [email, hashedPassword, role]
-        );
+    // Inserts the users row and the trainers row in a single transaction.
+    // Rolls back both if either insert fails. Returns the new user_id.
+    async createTrainerAccount(email, hashedPassword, name) {
+        const conn = await dbConnection.createConnection();
+        await conn.beginTransaction();
+        try {
+            const [userResult] = await conn.execute(
+                'INSERT INTO users (email, password, role) VALUES (?, ?, ?)',
+                [email, hashedPassword, 'trainer']
+            );
+            const userId = userResult.insertId;
+            await conn.execute(
+                'INSERT INTO trainers (trainer_id, name) VALUES (?, ?)',
+                [userId, name]
+            );
+            await conn.commit();
+            return userId;
+        } catch (error) {
+            await conn.rollback();
+            throw error;
+        } finally {
+            await conn.end();
+        }
     },
 
     // Looks up a user in the users table by email. Returns the full row or null.

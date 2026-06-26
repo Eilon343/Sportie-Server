@@ -13,12 +13,14 @@ function httpError(status, message) {
 }
 
 exports.authService = {
-    // Hashes the password and creates a new trainer account. Errors out if the email is taken.
+    // Hashes the password then atomically creates the users row + trainers row.
+    // The trainer's name defaults to the email prefix; they can update it in settings.
     async signup(body) {
         const { email, password } = body;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
+        const defaultName = email.split('@')[0];
         try {
-            await authRepo.insertUser(email, hashedPassword, 'trainer');
+            await authRepo.createTrainerAccount(email, hashedPassword, defaultName);
         } catch (error) {
             if (error.code === 'ER_DUP_ENTRY') throw httpError(400, 'Email already exists');
             throw error;

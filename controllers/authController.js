@@ -8,7 +8,7 @@ exports.authController = {
             res.status(201).json({ message: 'User registered successfully' });
         } catch (error) {
             if (error.status) return res.status(error.status).json({ message: error.message });
-            res.status(500).send('Error registering user: ' + error.message);
+            res.status(500).json({ message: 'Error registering user: ' + error.message });
         }
     },
 
@@ -19,7 +19,7 @@ exports.authController = {
             res.status(200).json(result);
         } catch (error) {
             if (error.status) return res.status(error.status).json({ message: error.message });
-            res.status(500).send('Error logging in: ' + error.message);
+            res.status(500).json({ message: 'Error logging in: ' + error.message });
         }
     },
 };
