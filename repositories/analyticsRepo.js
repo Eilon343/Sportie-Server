@@ -198,4 +198,47 @@ exports.analyticsRepo = {
             [trainerId]
         );
     },
+
+    async traineeExists(traineeId) {
+        const rows = await runQuery(
+            'SELECT 1 FROM trainees WHERE trainee_id = ? LIMIT 1',
+            [traineeId]
+        );
+        return rows.length > 0;
+    },
+
+    // Completed session count per day for the last 7 days for one trainee.
+    // Returns only days that have sessions; the service fills in the zeros.
+    async traineeWeeklyActivity(traineeId) {
+        return runQuery(
+            `SELECT DATE_FORMAT(ws.performed_at, '%Y-%m-%d') AS session_date,
+                    COUNT(*)                                  AS session_count
+             FROM workout_sessions ws
+             WHERE ws.trainee_id = ?
+               AND ws.status = 'completed'
+               AND ws.performed_at >= (CURDATE() - INTERVAL 29 DAY)
+             GROUP BY DATE_FORMAT(ws.performed_at, '%Y-%m-%d')
+             ORDER BY session_date`,
+            [traineeId]
+        );
+    },
+
+    // Last 5 completed sessions for one trainee with set count and total volume.
+    async traineeRecentSessions(traineeId) {
+        return runQuery(
+            `SELECT ws.session_id,
+                    ws.performed_at,
+                    COUNT(ls.logged_set_id)           AS set_count,
+                    COALESCE(SUM(ls.weight * ls.reps), 0) AS total_volume
+             FROM workout_sessions ws
+             LEFT JOIN logged_sets ls ON ls.session_id = ws.session_id
+             WHERE ws.trainee_id = ?
+               AND ws.status = 'completed'
+               AND ws.performed_at IS NOT NULL
+               AND ws.performed_at >= (CURDATE() - INTERVAL 29 DAY)
+             GROUP BY ws.session_id, ws.performed_at
+             ORDER BY ws.performed_at DESC`,
+            [traineeId]
+        );
+    },
 };

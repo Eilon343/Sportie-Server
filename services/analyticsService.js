@@ -125,4 +125,37 @@ exports.analyticsService = {
 
         return { weeks: weekLabels, rows: grid };
     },
+
+    // Completed sessions per day for the last 7 days for one trainee.
+    // Returns null for an unknown trainee so the controller can 404.
+    async getTraineeWeeklyActivity(traineeId) {
+        if (!(await analyticsRepo.traineeExists(traineeId))) return null;
+        const rows = await analyticsRepo.traineeWeeklyActivity(traineeId);
+
+        const counts = new Map(rows.map(r => [r.session_date, Number(r.session_count)]));
+
+        // Build a 30-slot array from 29 days ago through today.
+        const result = [];
+        for (let i = 29; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const dateStr = d.toISOString().slice(0, 10);
+            const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+            result.push({ day: dayName, date: dateStr, sessions: counts.get(dateStr) ?? 0 });
+        }
+        return result;
+    },
+
+    // Last 5 completed sessions for one trainee with set count and total volume.
+    // Returns null for an unknown trainee so the controller can 404.
+    async getTraineeRecentSessions(traineeId) {
+        if (!(await analyticsRepo.traineeExists(traineeId))) return null;
+        const rows = await analyticsRepo.traineeRecentSessions(traineeId);
+        return rows.map(r => ({
+            session_id: r.session_id,
+            performed_at: r.performed_at,
+            set_count: Number(r.set_count),
+            total_volume: Number(r.total_volume),
+        }));
+    },
 };

@@ -16,4 +16,9 @@ analyticsRouter.get('/volume-over-time/:trainerId', analyticsController.getVolum
 // Heatmap of when the trainer's trainees are most active.
 analyticsRouter.get('/engagement-heatmap/:trainerId', analyticsController.getEngagementHeatmap);
 
+// Per-day session counts for the current week for a single trainee.
+analyticsRouter.get('/trainee-weekly-activity/:traineeId', analyticsController.getTraineeWeeklyActivity);
+// Last 5 completed sessions for a single trainee with set count and volume.
+analyticsRouter.get('/trainee-recent-sessions/:traineeId', analyticsController.getTraineeRecentSessions);
+
 module.exports = analyticsRouter;

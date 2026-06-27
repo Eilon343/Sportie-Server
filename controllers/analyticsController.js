@@ -115,4 +115,40 @@ exports.analyticsController = {
             res.status(500).send('Error fetching engagement heatmap: ' + error.message);
         }
     },
+
+    //GET /api/analytics/trainee-weekly-activity/:traineeId
+    async getTraineeWeeklyActivity(req, res) {
+        const { traineeId } = req.params;
+        if (isInvalidId(traineeId)) {
+            return res.status(400).json({ message: 'Invalid traineeId: must be a positive integer' });
+        }
+        try {
+            const data = await analyticsService.getTraineeWeeklyActivity(traineeId);
+            if (data === null) {
+                return res.status(404).json({ message: 'Trainee not found' });
+            }
+            res.status(200).json(data);
+        } catch (error) {
+            console.error('Error fetching trainee weekly activity:', error);
+            res.status(500).send('Error fetching trainee weekly activity: ' + error.message);
+        }
+    },
+
+    //GET /api/analytics/trainee-recent-sessions/:traineeId
+    async getTraineeRecentSessions(req, res) {
+        const { traineeId } = req.params;
+        if (isInvalidId(traineeId)) {
+            return res.status(400).json({ message: 'Invalid traineeId: must be a positive integer' });
+        }
+        try {
+            const data = await analyticsService.getTraineeRecentSessions(traineeId);
+            if (data === null) {
+                return res.status(404).json({ message: 'Trainee not found' });
+            }
+            res.status(200).json(data);
+        } catch (error) {
+            console.error('Error fetching trainee recent sessions:', error);
+            res.status(500).send('Error fetching trainee recent sessions: ' + error.message);
+        }
+    },
 };
