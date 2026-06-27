@@ -1,4 +1,4 @@
-const { authRepo } = require('../repositories/authRepo');
+const { authRepo } = require('../schemas/authRepo');
 const bcrypt = require('bcrypt');
 
 const saltRounds = 10;

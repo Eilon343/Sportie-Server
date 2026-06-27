@@ -16,7 +16,7 @@ Backend missions needed to make Sportie complete, ordered by priority: **Must-Ha
   - Plan generator — rules engine that builds a workout from goal + days + body parts.
 - Plan persistence: `training_plans` + `plan_exercises` tables exist and `POST /api/plans/save` saves a generated plan to a trainee.
 - Startup env-var guard in `index.js` fails fast when a required key is missing.
-- **Trainer Analytics module** — the project's first fully-layered feature, mounted at `/api/analytics`: `routes/analyticsRoutes.js` → `controllers/analyticsController.js` (req/res only) → `services/analyticsService.js` (rules + DTO shaping) → `repositories/analyticsRepo.js` (all parameterized SQL). Five roster-wide, trainer-scoped analyses: at-risk trainees, attendance distribution, improvement leaderboard (body-weight % change or Epley est-1RM strength), volume-over-time (grouped by ISO week), and engagement heatmap. This `repositories/` layer is new and is the reference architecture for the rest of the backend.
+- **Trainer Analytics module** — the project's first fully-layered feature, mounted at `/api/analytics`: `routes/analyticsRoutes.js` → `controllers/analyticsController.js` (req/res only) → `services/analyticsService.js` (rules + DTO shaping) → `schemas/analyticsRepo.js` (all parameterized SQL). Five roster-wide, trainer-scoped analyses: at-risk trainees, attendance distribution, improvement leaderboard (body-weight % change or Epley est-1RM strength), volume-over-time (grouped by ISO week), and engagement heatmap. This `schemas/` layer is new and is the reference architecture for the rest of the backend.
 - **Three analytics tables** — `workout_sessions`, `logged_sets`, `trainee_metrics` — defined in `migrations/001_analytics_tables.sql` (TiDB/MySQL types, FKs to existing `trainees`/`training_plans`/`exercises`/`plan_exercises`). This is the project's first migration; a one-shot runner `migrate.js` (`npm run migrate`) applies it. **These tables are NOT in `db_init.sql`** — they only exist after `npm run migrate`.
 - **Analytics data tooling** — `seedAnalytics.js` (`npm run seed:analytics`) generates realistic sessions/sets/metrics across a 12-week window; `checkAnalyticsData.js` prints row-count diagnostics. Both reuse `db_connection.js`.
 
@@ -29,7 +29,7 @@ Backend missions needed to make Sportie complete, ordered by priority: **Must-Ha
 Derived from the course submission spec (`הגשת פרוייקט הקורס 2026`). These are **graded / blocking** — they outrank the nice-to-haves below. Only backend-relevant items are listed; frontend is referenced only where the backend must interoperate with it.
 
 ### Already aligned ✅
-- [x] **Node.js + Express**, organized into `controllers/` + `services/` (+ `routers/`), with the analytics feature adding a `routes/` + `repositories/` layered reference (controller → service → repo).
+- [x] **Node.js + Express**, organized into `controllers/` + `services/` (+ `routers/`), with the analytics feature adding a `routes/` + `schemas/` layered reference (controller → service → repo).
 - [x] **Full CRUD exists** — Create (signup, `assignTrainee`, `savePlan`), Read (trainees/trainers/exercises/meals/monthly activity/analytics), Update (`updateOwnProfile`, `updateManagedTrainee`, `changePassword`), Delete (`deleteTrainer`, `unassignTrainee`).
 - [x] **≥2 "complex" queries** — JOIN (`getTrainerById` joins `trainers`+`users`), aggregation/stats (`getMonthlyActiveTrainees`), and the analytics repo's multi-table aggregations (ISO-week `YEARWEEK` grouping for volume/heatmap, `SUM(weight*reps)` volume, earliest-vs-latest leaderboard, attendance counts). Filtering by trainer/status also present.
 - [x] **External public API tied to the domain** — ExerciseDB + TheMealDB are real parts of the system, not decorative.
@@ -52,7 +52,7 @@ Derived from the course submission spec (`הגשת פרוייקט הקורס 202
 The generator builds a plan and a trainer can now **save** it to a trainee. Saving is done; reading saved plans back is not yet wired.
 
 - [x] Add the two tables — implemented as `training_plans` (plan_id, trainee_id, goal, days_per_week, created_at) and `plan_exercises` (plan_exercise_id, plan_id, exercise_id, custom_exercise_name, day_index, sets, reps, rest_seconds) in `db_init.sql`.
-- [ ] `services/planService.js` + `repositories/planRepo.js` — DB layer (uses `dbConnection`), separate from the generator. *(Currently the save logic lives inline in `planController.js`; not yet extracted. The analytics feature — `services/analyticsService.js` + `repositories/analyticsRepo.js` — is now the working template to copy.)*
+- [ ] `services/planService.js` + `schemas/planRepo.js` — DB layer (uses `dbConnection`), separate from the generator. *(Currently the save logic lives inline in `planController.js`; not yet extracted. The analytics feature — `services/analyticsService.js` + `schemas/analyticsRepo.js` — is now the working template to copy.)*
 - [x] `controllers/planController.js` — save handler (`savePlan`) added alongside the generate handler.
 - [ ] Read handlers in `planController.js` — fetch a trainee's plans / a single plan.
 - [x] Endpoint `POST /api/plans/save` (save).
@@ -97,7 +97,7 @@ Your RapidAPI BASIC tier has a monthly request cap. Generating plans hammers it.
 - [ ] Sanitize/guard route params before they hit SQL (you're using parameterized queries already — good — but validate types).
 
 ### 2.4 Code consistency
-- [x] Remove leftover `console.log` debugging statements — none remain in `controllers/`, `services/`, or `repositories/` (only `console.error` for genuine error logging; the standalone `db_init`/`seed`/`migrate`/`check` scripts legitimately log progress).
+- [x] Remove leftover `console.log` debugging statements — none remain in `controllers/`, `services/`, or `schemas/` (only `console.error` for genuine error logging; the standalone `db_init`/`seed`/`migrate`/`check` scripts legitimately log progress).
 - [x] Add an env-var startup guard in `index.js` (fail fast if a key is missing) — implemented at `index.js` top (validates `DB_*`, `EXERCISEDB_*`, `MEALDB_BASE_URL`).
 - [ ] Fix unused config: `DB_PORT` in `.env` is unused — `db_connection.js` doesn't read it (defaults apply).
 
