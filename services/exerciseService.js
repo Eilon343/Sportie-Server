@@ -7,6 +7,7 @@ const HEADERS = {
   'Content-Type': 'application/json',
 };
 
+
 // Fetches exercises from the ExerciseDB API, optionally filtered by body part, target, or equipment.
 async function getExercises({ bodyPart, target, equipment, limit = 20, offset = 0 } = {}) {
   let path = '/exercises';
@@ -24,7 +25,9 @@ async function getExerciseById(id) {
 
 // Searches exercises by name.
 async function searchExercisesByName(name, { limit = 20, offset = 0 } = {}) {
-  return getJSON(buildUrl(BASE_URL, `/exercises/name/${name}`, { limit, offset }), HEADERS);
+  const result = await getJSON(buildUrl(BASE_URL, `/exercises/name/${name}`, { limit, offset }), HEADERS);
+  console.log('ExerciseDB sample: ', result[0]);
+  return result;
 }
 
 // The next three return simple lists used to fill dropdowns / filters in the trainer UI.
