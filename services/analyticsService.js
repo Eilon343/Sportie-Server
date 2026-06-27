@@ -1,4 +1,4 @@
-const { analyticsRepo } = require('../repositories/analyticsRepo');
+const { analyticsRepo } = require('../schemas/analyticsRepo');
 
 // Business rules + response shaping. SQL does the aggregation; this layer only
 // does thresholds, bucketing, week formatting and DTO shaping.

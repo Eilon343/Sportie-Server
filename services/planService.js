@@ -1,5 +1,5 @@
-const { planRepo } = require('../repositories/planRepo');
-const { exerciseRepo } = require('../repositories/exerciseRepo');
+const { planRepo } = require('../schemas/planRepo');
+const { exerciseRepo } = require('../schemas/exerciseRepo');
 
 // Tagged error so the controller can map it to the right HTTP status (e.g. 404).
 function httpError(status, message) {

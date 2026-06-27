@@ -1,4 +1,4 @@
-const { traineesRepo } = require('../repositories/traineesRepo');
+const { traineesRepo } = require('../schemas/traineesRepo');
 const { validateAvatar } = require('../utils/avatar');
 
 // Business rules + response shaping. No SQL here, no req/res here.

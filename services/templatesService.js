@@ -1,4 +1,4 @@
-const { templatesRepo } = require('../repositories/templatesRepo');
+const { templatesRepo } = require('../schemas/templatesRepo');
 const { planService } = require('./planService');
 
 // Per-trainer template caps. Checked in the service BEFORE any insert.
