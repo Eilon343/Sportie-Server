@@ -1,8 +1,12 @@
-# Sportie API Routes — Complete Reference (55 routes)
+# Sportie API Routes — Complete Reference (57 routes)
+
+Postman organization: each route shows its **folder** and **request name**.
+Routes marked ✅ are already done in the collection.
 
 ---
 
 ## GET /
+**Postman:** `Health Check` → `Health check`
 **What it does:** Health check — confirms server is running.
 **Request:** No body, no params.
 **200:**
@@ -15,6 +19,7 @@ Server is running!
 ## Auth
 
 ### POST /api/auth/signup
+**Postman:** `Auth` → `Sign up`
 **What it does:** Registers a new trainer. Hashes password, creates user + trainer rows.
 **Request body:**
 ```json
@@ -32,6 +37,7 @@ Server is running!
 ---
 
 ### POST /api/auth/login
+**Postman:** `Auth` → `Login`
 **What it does:** Authenticates by email/password, returns trainer profile.
 **Request body:**
 ```json
@@ -67,6 +73,7 @@ Server is running!
 ## Trainers
 
 ### GET /api/trainers
+**Postman:** `Trainers` → `Get all trainers`
 **What it does:** Returns the full list of all trainers.
 **Request:** No body, no params.
 **200:**
@@ -96,6 +103,7 @@ Server is running!
 ---
 
 ### GET /api/trainers/:trainerId
+**Postman:** `Trainers` → `Get trainer by ID`
 **What it does:** Gets a single trainer by ID.
 **Request:** Param trainerId = 101
 **200:**
@@ -126,6 +134,7 @@ Server is running!
 ---
 
 ### GET /api/trainers/:trainerId/monthly-activity
+**Postman:** `Trainers` → `Get monthly activity`
 **What it does:** Returns how many of the trainer's trainees were active each calendar month.
 **Request:** Param trainerId = 101
 **200:**
@@ -144,6 +153,7 @@ Server is running!
 ---
 
 ### PUT /api/trainers/:trainerId/profile
+**Postman:** `Trainers` → `Update trainer profile`
 **What it does:** Trainer updates their own profile fields.
 **Request:** Param trainerId = 101, Body:
 ```json
@@ -180,6 +190,7 @@ Server is running!
 ---
 
 ### DELETE /api/trainers/:trainerId
+**Postman:** `Trainers` → `Delete trainer`
 **What it does:** Deletes trainer and unassigns all their trainees first.
 **Request:** Param trainerId = 101
 **200:**
@@ -194,6 +205,7 @@ Server is running!
 ---
 
 ### POST /api/trainers/:trainerId/trainees
+**Postman:** `Trainers` → `Assign trainee`
 **What it does:** Assigns an existing unassigned trainee to this trainer.
 **Request:** Param trainerId = 101, Body:
 ```json
@@ -215,6 +227,7 @@ Server is running!
 ---
 
 ### PUT /api/trainers/:trainerId/trainees/:traineeId
+**Postman:** `Trainers` → `Update managed trainee`
 **What it does:** Trainer updates one of their managed trainees (status, progress, weight, goal).
 **Request:** Params trainerId = 101, traineeId = 1, Body:
 ```json
@@ -238,6 +251,7 @@ Server is running!
 ---
 
 ### DELETE /api/trainers/:trainerId/trainees/:traineeId
+**Postman:** `Trainers` → `Unassign trainee`
 **What it does:** Removes trainee from trainer. Trainee account stays.
 **Request:** Params trainerId = 101, traineeId = 1
 **200:**
@@ -254,6 +268,7 @@ Server is running!
 ## Trainees
 
 ### GET /api/trainees/trainer/:trainerId
+**Postman:** `Trainees` → `Get trainees by trainer`
 **What it does:** Gets all trainees assigned to a specific trainer. Used by the dashboard.
 **Request:** Param trainerId = 101
 **200:**
@@ -291,6 +306,7 @@ Server is running!
 ---
 
 ### GET /api/trainees/:traineeId
+**Postman:** `Trainees` → `Get trainee by ID`
 **What it does:** Gets a single trainee by ID.
 **Request:** Param traineeId = 1
 **200:**
@@ -320,6 +336,7 @@ Server is running!
 ---
 
 ### PUT /api/trainees/:traineeId/profile
+**Postman:** `Trainees` → `Update trainee profile`
 **What it does:** Trainee updates their own profile. Cannot touch weight/status/progress — those are trainer-only.
 **Request:** Param traineeId = 1, Body:
 ```json
@@ -352,6 +369,7 @@ Server is running!
 ## Exercises
 
 ### GET /api/exercises/bodyparts
+**Postman:** `Exercises` → `Get body parts`
 **What it does:** Returns all body part options for filtering exercises.
 **Request:** No params.
 **200:**
@@ -362,6 +380,7 @@ Server is running!
 ---
 
 ### GET /api/exercises/targets
+**Postman:** `Exercises` → `Get targets`
 **What it does:** Returns all target muscle options for filtering.
 **Request:** No params.
 **200:**
@@ -372,6 +391,7 @@ Server is running!
 ---
 
 ### GET /api/exercises/equipment
+**Postman:** `Exercises` → `Get equipment`
 **What it does:** Returns all equipment type options for filtering.
 **Request:** No params.
 **200:**
@@ -382,6 +402,7 @@ Server is running!
 ---
 
 ### GET /api/exercises/search/:name
+**Postman:** `Exercises` → `Search exercises by name`
 **What it does:** Searches exercises by name directly from ExerciseDB API. Supports ?limit= and ?offset=.
 **Request:** Param name = bench, Query ?limit=3&offset=0
 **200:**
@@ -403,6 +424,7 @@ Server is running!
 ---
 
 ### GET /api/exercises/:id
+**Postman:** `Exercises` → `Get exercise by ID`
 **What it does:** Gets a single exercise by its ID.
 **Request:** Param id = 0026
 **200:**
@@ -426,6 +448,7 @@ Server is running!
 ---
 
 ### GET /api/exercises
+**Postman:** `Exercises` → `Get exercises (filter)`
 **What it does:** Gets exercises with filtering. Checks local DB cache first, falls back to ExerciseDB. Supports ?search=, ?bodyPart=, ?target=, ?equipment=, ?limit=, ?offset=.
 **Request (search):** ?search=squat&limit=5
 **Request (filter):** ?bodyPart=chest&limit=10
@@ -449,6 +472,7 @@ Server is running!
 ## Meals
 
 ### GET /api/meals/search
+**Postman:** `Meals` → `Search meals`
 **What it does:** Searches meals by name from TheMealDB. ?q= is required.
 **Request:** ?q=chicken
 **200:**
@@ -471,6 +495,7 @@ Server is running!
 ---
 
 ### GET /api/meals/letter/:letter
+**Postman:** `Meals` → `Get meals by letter`
 **What it does:** Gets all meals whose name starts with the given letter a-z.
 **Request:** Param letter = c
 **200:**
@@ -492,7 +517,8 @@ Server is running!
 
 ---
 
-### GET /api/meals/random
+### GET /api/meals/random ✅
+**Postman:** `Meals` → `Get random meal`
 **What it does:** Returns one random meal.
 **Request:** No params.
 **200:**
@@ -511,7 +537,8 @@ Server is running!
 
 ---
 
-### GET /api/meals/categories
+### GET /api/meals/categories ✅
+**Postman:** `Meals` → `Get categories`
 **What it does:** Returns all meal categories with full details.
 **Request:** No params.
 **200:**
@@ -534,7 +561,8 @@ Server is running!
 
 ---
 
-### GET /api/meals/category/:category
+### GET /api/meals/category/:category ✅
+**Postman:** `Meals` → `Get meals by category`
 **What it does:** Gets all meals in a specific category.
 **Request:** Param category = beef
 **200:**
@@ -551,7 +579,8 @@ Server is running!
 
 ---
 
-### GET /api/meals/area/:area
+### GET /api/meals/area/:area ✅
+**Postman:** `Meals` → `Get meals by area`
 **What it does:** Gets all meals from a specific cuisine/area.
 **Request:** Param area = Canadian
 **200:**
@@ -568,7 +597,8 @@ Server is running!
 
 ---
 
-### GET /api/meals/ingredient/:ingredient
+### GET /api/meals/ingredient/:ingredient ✅
+**Postman:** `Meals` → `Get meals by ingredient`
 **What it does:** Gets all meals that use a specific ingredient.
 **Request:** Param ingredient = Chicken
 **200:**
@@ -585,7 +615,8 @@ Server is running!
 
 ---
 
-### GET /api/meals/list/categories
+### GET /api/meals/list/categories ✅
+**Postman:** `Meals` → `List category names`
 **What it does:** Returns just category names — lightweight version for dropdowns.
 **Request:** No params.
 **200:**
@@ -600,7 +631,8 @@ Server is running!
 
 ---
 
-### GET /api/meals/list/areas
+### GET /api/meals/list/areas ✅
+**Postman:** `Meals` → `List area names`
 **What it does:** Returns list of cuisine area names for dropdowns.
 **Request:** No params.
 **200:**
@@ -615,7 +647,8 @@ Server is running!
 
 ---
 
-### GET /api/meals/list/ingredients
+### GET /api/meals/list/ingredients ✅
+**Postman:** `Meals` → `List ingredient names`
 **What it does:** Returns list of ingredients for dropdowns.
 **Request:** No params.
 **200:**
@@ -630,7 +663,8 @@ Server is running!
 
 ---
 
-### GET /api/meals/:id
+### GET /api/meals/:id ✅
+**Postman:** `Meals` → `Get meal by ID`
 **What it does:** Gets a single meal by its numeric ID.
 **Request:** Param id = 52772
 **200:**
@@ -658,6 +692,7 @@ Server is running!
 ## Plans
 
 ### POST /api/plans/generate
+**Postman:** `Plans` → `Generate plan`
 **What it does:** Builds a workout plan from goal/preferences without saving. Goal must be strength, hypertrophy, or fat loss.
 **Request body:**
 ```json
@@ -701,6 +736,7 @@ Server is running!
 ---
 
 ### POST /api/plans/save
+**Postman:** `Plans` → `Save plan`
 **What it does:** Saves a generated plan to the database for a specific trainee.
 **Request body:**
 ```json
@@ -734,6 +770,7 @@ Server is running!
 ---
 
 ### GET /api/plans/active/:traineeId
+**Postman:** `Plans` → `Get active plan`
 **What it does:** Gets the trainee's currently active workout plan with all days and exercises.
 **Request:** Param traineeId = 1
 **200:**
@@ -763,6 +800,7 @@ Server is running!
 ---
 
 ### GET /api/plans/:planId
+**Postman:** `Plans` → `Get plan by ID`
 **What it does:** Gets any plan by its ID (not just active ones).
 **Request:** Param planId = 42
 **200:**
@@ -790,6 +828,7 @@ Server is running!
 ---
 
 ### PUT /api/plans/:planId
+**Postman:** `Plans` → `Update plan`
 **What it does:** Replaces an existing plan's goal, daysPerWeek, and all exercises.
 **Request:** Param planId = 42, Body:
 ```json
@@ -818,6 +857,7 @@ Server is running!
 ---
 
 ### GET /api/plans/meal-plan/:traineeId
+**Postman:** `Plans` → `Get active meal plan`
 **What it does:** Gets the trainee's active meal plan with all slots, options, and calculated day-total macros.
 **Request:** Param traineeId = 1
 **200:**
@@ -876,6 +916,7 @@ Server is running!
 ---
 
 ### PUT /api/plans/meal-plan/:planId
+**Postman:** `Plans` → `Update meal plan`
 **What it does:** Updates a meal plan's name, slots, and options. Macros are recalculated automatically.
 **Request:** Param planId = 10, Body:
 ```json
@@ -912,7 +953,8 @@ Server is running!
 
 ## Templates — Workout
 
-### GET /api/templates/workout
+### GET /api/templates/workout ✅
+**Postman:** `Templates / Workout` → `List workout templates`
 **What it does:** Lists all workout templates for a trainer. ?trainerId= is required.
 **Request:** ?trainerId=101
 **200:**
@@ -944,7 +986,8 @@ Server is running!
 
 ---
 
-### POST /api/templates/workout
+### POST /api/templates/workout ✅
+**Postman:** `Templates / Workout` → `Create workout template`
 **What it does:** Saves a new workout template. Cap is 10 per trainer.
 **Request body:**
 ```json
@@ -978,7 +1021,8 @@ Server is running!
 
 ---
 
-### PUT /api/templates/workout/:id
+### PUT /api/templates/workout/:id ✅
+**Postman:** `Templates / Workout` → `Update workout template`
 **What it does:** Edits a workout template in-place, replacing all blocks and exercises.
 **Request:** Param id = 120001, Body:
 ```json
@@ -1010,7 +1054,8 @@ Server is running!
 
 ---
 
-### DELETE /api/templates/workout/:id
+### DELETE /api/templates/workout/:id ✅
+**Postman:** `Templates / Workout` → `Delete workout template`
 **What it does:** Deletes a workout template. Cascades to all its blocks and exercises.
 **Request:** Param id = 3
 **200:**
@@ -1024,7 +1069,8 @@ Server is running!
 
 ---
 
-### POST /api/templates/workout/:id/assign
+### POST /api/templates/workout/:id/assign ✅
+**Postman:** `Templates / Workout` → `Assign workout template`
 **What it does:** Assigns a workout template to a trainee as their new active plan.
 **Request:** Param id = 180004, Body:
 ```json
@@ -1043,7 +1089,8 @@ Server is running!
 
 ## Templates — Meal
 
-### GET /api/templates/meal
+### GET /api/templates/meal ✅
+**Postman:** `Templates / Meal` → `List meal templates`
 **What it does:** Lists all meal templates for a trainer. ?trainerId= is required.
 **Request:** ?trainerId=101
 **200:**
@@ -1059,13 +1106,6 @@ Server is running!
         "options": [
           { "mealdb_id": null, "meal_name": "Oats", "quantity": "100.00", "unit": "g", "calories_per_100": "389.00", "protein_per_100": "17.00", "carbs_per_100": "66.00", "fat_per_100": "7.00" }
         ]
-      },
-      {
-        "slot_index": 1,
-        "slot_label": "Lunch",
-        "options": [
-          { "mealdb_id": "52772", "meal_name": "Chicken Handi", "meal_thumb": "https://www.themealdb.com/images/media/meals/wyxwsp1486979827.jpg", "quantity": "100.00", "unit": "g", "calories_per_100": "0.00", "protein_per_100": "0.00", "carbs_per_100": "0.00", "fat_per_100": "0.00" }
-        ]
       }
     ]
   }
@@ -1078,7 +1118,8 @@ Server is running!
 
 ---
 
-### POST /api/templates/meal
+### POST /api/templates/meal ✅
+**Postman:** `Templates / Meal` → `Create meal template`
 **What it does:** Saves a new meal template. Cap is 5 per trainer.
 **Request body:**
 ```json
@@ -1115,7 +1156,8 @@ Server is running!
 
 ---
 
-### PUT /api/templates/meal/:id
+### PUT /api/templates/meal/:id ✅
+**Postman:** `Templates / Meal` → `Update meal template`
 **What it does:** Edits a meal template in-place, replacing all slots and options.
 **Request:** Param id = 30001, Body:
 ```json
@@ -1148,7 +1190,8 @@ Server is running!
 
 ---
 
-### DELETE /api/templates/meal/:id
+### DELETE /api/templates/meal/:id ✅
+**Postman:** `Templates / Meal` → `Delete meal template`
 **What it does:** Deletes a meal template. Cascades to all slots and options.
 **Request:** Param id = 60001
 **200:**
@@ -1162,7 +1205,8 @@ Server is running!
 
 ---
 
-### POST /api/templates/meal/:id/assign
+### POST /api/templates/meal/:id/assign ✅
+**Postman:** `Templates / Meal` → `Assign meal template`
 **What it does:** Assigns a meal template to a trainee as their new active meal plan. Trainee must be managed by the template's trainer.
 **Request:** Param id = 60001, Body:
 ```json
@@ -1185,7 +1229,8 @@ Server is running!
 
 ## Analytics
 
-### GET /api/analytics/workouts-this-week/:trainerId
+### GET /api/analytics/workouts-this-week/:trainerId ✅
+**Postman:** `Analytics` → `Workouts this week`
 **What it does:** Total completed workouts this week (Sun-Sat) across all the trainer's trainees. Used as a dashboard tile.
 **Request:** Param trainerId = 101
 **200:**
@@ -1199,7 +1244,8 @@ Server is running!
 
 ---
 
-### GET /api/analytics/at-risk/:trainerId
+### GET /api/analytics/at-risk/:trainerId ✅
+**Postman:** `Analytics` → `At risk trainees`
 **What it does:** Lists trainees who haven't trained recently so the trainer can follow up.
 **Request:** Param trainerId = 101
 **200:**
@@ -1217,7 +1263,8 @@ Server is running!
 
 ---
 
-### GET /api/analytics/attendance-distribution/:trainerId
+### GET /api/analytics/attendance-distribution/:trainerId ✅
+**Postman:** `Analytics` → `Attendance distribution`
 **What it does:** Buckets the trainer's trainees by attendance rate over a 4-week window (<50%, 50-80%, 80+%).
 **Request:** Param trainerId = 101
 **200:**
@@ -1236,7 +1283,8 @@ Server is running!
 
 ---
 
-### GET /api/analytics/leaderboard/:trainerId
+### GET /api/analytics/leaderboard/:trainerId ✅
+**Postman:** `Analytics` → `Leaderboard`
 **What it does:** Ranks the trainer's trainees by body_weight or strength. Default is body_weight, use ?metric=strength to switch.
 **Request:** Param trainerId = 101, Query ?metric=body_weight
 **200:**
@@ -1257,7 +1305,8 @@ Server is running!
 
 ---
 
-### GET /api/analytics/volume-over-time/:trainerId
+### GET /api/analytics/volume-over-time/:trainerId ✅
+**Postman:** `Analytics` → `Volume over time`
 **What it does:** Total training volume (sets x reps x weight) per week — used for trend charts.
 **Request:** Param trainerId = 101
 **200:**
@@ -1276,7 +1325,8 @@ Server is running!
 
 ---
 
-### GET /api/analytics/engagement-heatmap/:trainerId
+### GET /api/analytics/engagement-heatmap/:trainerId ✅
+**Postman:** `Analytics` → `Engagement heatmap`
 **What it does:** Heatmap grid — rows are trainees, columns are weeks, values are workout counts per cell.
 **Request:** Param trainerId = 101
 **200:**
@@ -1299,6 +1349,7 @@ Server is running!
 ---
 
 ### GET /api/analytics/trainee-weekly-activity/:traineeId
+**Postman:** `Analytics` → `Trainee weekly activity`
 **What it does:** Returns completed session counts per day for the last 30 days for a single trainee. Used to populate the monthly activity bar chart on the trainee profile page.
 **Request:** Param traineeId = 1
 **200:**
@@ -1323,6 +1374,7 @@ Server is running!
 ---
 
 ### GET /api/analytics/trainee-recent-sessions/:traineeId
+**Postman:** `Analytics` → `Trainee recent sessions`
 **What it does:** Returns all completed sessions for a single trainee within the last 30 days, ordered newest first. Includes set count and total volume (weight × reps) per session. Used for the Recent Activity list on the trainee profile page.
 **Request:** Param traineeId = 1
 **200:**
@@ -1346,7 +1398,8 @@ Server is running!
 
 ## Users
 
-### PUT /api/users/:userId/password
+### PUT /api/users/:userId/password ✅
+**Postman:** `Users` → `Change password`
 **What it does:** Changes a user's password after verifying the current one.
 **Request:** Param userId = 102, Body:
 ```json

@@ -1,5 +1,5 @@
-require('dotenv').config();
-const { dbConnection } = require('../db_connection');
+﻿require('dotenv').config();
+const { dbConnection } = require('../db/connection');
 
 // Throwaway verification for the trainers refactor. Runs HTTP checks (Node global fetch
 // against the running server) + read-only SQL checks (reuse db_connection.js). No writes
@@ -30,7 +30,7 @@ async function httpChecks() {
         check('email' in body, '  has "email" key');
         check('date_of_birth' in body, '  has "date_of_birth" key');
         const hasPassword = 'password' in body;
-        console.log(`  ${hasPassword ? 'LEAK! password present' : 'no password field ✓'}`);
+        console.log(`  ${hasPassword ? 'LEAK! password present' : 'no password field âœ“'}`);
         check(!hasPassword, '  password NOT present');
     } catch (e) {
         check(false, `GET /api/trainers/${trainerId} threw: ${e.message}`);
@@ -55,7 +55,7 @@ async function httpChecks() {
         if (Array.isArray(body) && body.length) {
             console.log('  first element keys:', Object.keys(body[0]));
         } else {
-            console.log('  (empty array — no activity rows for this trainer)');
+            console.log('  (empty array â€” no activity rows for this trainer)');
         }
     } catch (e) {
         check(false, `GET monthly-activity threw: ${e.message}`);
@@ -67,13 +67,13 @@ async function sqlChecks(conn) {
     console.log('\n=== SQL checks (read-only) ===');
 
     const [trainers] = await conn.execute('SELECT trainer_id, name FROM trainers LIMIT 10');
-    console.log('\n[4] trainers (LIMIT 10) — valid ids:');
+    console.log('\n[4] trainers (LIMIT 10) â€” valid ids:');
     console.table(trainers);
 
     const [counts] = await conn.execute(
         'SELECT trainer_id, COUNT(*) AS trainees FROM trainees WHERE trainer_id IS NOT NULL GROUP BY trainer_id'
     );
-    console.log('\n[5] trainee counts per trainer — pick one WITH trainees for the delete test:');
+    console.log('\n[5] trainee counts per trainer â€” pick one WITH trainees for the delete test:');
     console.table(counts);
 }
 

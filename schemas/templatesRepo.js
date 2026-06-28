@@ -1,4 +1,4 @@
-const { dbConnection } = require('../db_connection');
+﻿const { dbConnection } = require('../db/connection');
 
 // WORKOUT TEMPLATES
 exports.templatesRepo = {
@@ -102,7 +102,7 @@ exports.templatesRepo = {
 
                 // Only workout blocks hold exercises; cardio/rest skip this insert entirely.
                 if (blockType === 'workout' && Array.isArray(block.exercises) && block.exercises.length > 0) {
-                    // Frontend sends exercise names (strings), not ExerciseDB ids → store as custom_exercise_name.
+                    // Frontend sends exercise names (strings), not ExerciseDB ids â†’ store as custom_exercise_name.
                     const values = block.exercises.map((ex) => [
                         blockId,
                         null,
@@ -289,7 +289,7 @@ exports.templatesRepo = {
             );
             const templateId = tplResult.insertId;
 
-            // Frontend sends slots as { label, options }; slot_index is derived from order (0,1,2…).
+            // Frontend sends slots as { label, options }; slot_index is derived from order (0,1,2â€¦).
             for (let slotIndex = 0; slotIndex < slots.length; slotIndex++) {
                 const slot = slots[slotIndex];
                 const [slotResult] = await connection.execute(
@@ -299,7 +299,7 @@ exports.templatesRepo = {
                 const slotId = slotResult.insertId;
 
                 if (Array.isArray(slot.options) && slot.options.length > 0) {
-                    // meal_name is NOT NULL — drop options the frontend sent without a name.
+                    // meal_name is NOT NULL â€” drop options the frontend sent without a name.
                     const named = slot.options.filter((o) => o.name != null && o.name !== '');
                     if (named.length > 0) {
                         const values = named.map((o) => optionValuesFromPayload(slotId, o));
@@ -474,7 +474,7 @@ function optionValues(slotId, o) {
 
 // Builds a meal option row tuple from a raw FRONTEND option payload (the save path).
 // Frontend shape: { source, mealId, name, thumb, quantity, unit, per100g:{...}, macros:{...} }.
-// macros are scaled/derived values — ignored; we persist per-100g only. Caller filters out
+// macros are scaled/derived values â€” ignored; we persist per-100g only. Caller filters out
 // options with no name (meal_name is NOT NULL).
 function optionValuesFromPayload(slotId, o) {
     return [

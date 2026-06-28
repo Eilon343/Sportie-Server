@@ -1,8 +1,8 @@
-require('dotenv').config();
-const { dbConnection } = require('../../db_connection');
+﻿require('dotenv').config();
+const { dbConnection } = require('../../db/connection');
 
 // Self-contained, SAFE verification for the auth refactor. Creates a throwaway trainer
-// via the REAL signup endpoint, then (because signup only makes a users row — the known
+// via the REAL signup endpoint, then (because signup only makes a users row â€” the known
 // gap) inserts a trainers profile via SQL so the login-success path can be exercised.
 // Only ever touches the id it creates; HARD-REFUSES to target users 101/102/103.
 //
@@ -101,7 +101,7 @@ async function main() {
         console.error('\nTest error:', error.message);
         pass = false;
     } finally {
-        // ---- 5. CLEANUP — only the id this script created (cascade removes trainers row) ----
+        // ---- 5. CLEANUP â€” only the id this script created (cascade removes trainers row) ----
         console.log('\n=== 5. CLEANUP ===');
         try {
             if (userId !== null && !FORBIDDEN_USER_IDS.includes(Number(userId))) {

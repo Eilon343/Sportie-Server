@@ -1,7 +1,7 @@
-const { dbConnection } = require('../db_connection');
+﻿const { dbConnection } = require('../db/connection');
 
 // All trainees SQL lives here, parameterized, one method per query. Connection per
-// call via dbConnection.createConnection() — matching the analytics repo pattern.
+// call via dbConnection.createConnection() â€” matching the analytics repo pattern.
 
 exports.traineesRepo = {
     // Gets all trainees belonging to a given trainer from the trainees table.

@@ -1,4 +1,4 @@
-const { dbConnection } = require('../db_connection');
+﻿const { dbConnection } = require('../db/connection');
 
 exports.planRepo = {
     // Confirms a trainee exists, so we can 404 a bad trainee_id up front instead of

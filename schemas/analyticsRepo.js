@@ -1,4 +1,4 @@
-const { dbConnection } = require('../db_connection');
+﻿const { dbConnection } = require('../db/connection');
 
 // All SQL for the analytics feature lives here. One async method per query,
 // parameterized with mysql2 placeholders (no string interpolation of inputs).

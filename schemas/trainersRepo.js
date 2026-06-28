@@ -1,4 +1,4 @@
-const { dbConnection } = require('../db_connection');
+﻿const { dbConnection } = require('../db/connection');
 
 exports.trainersRepo = {
     // Gets one trainer's row plus their user info (email, dob, etc.) by joining trainers and users.

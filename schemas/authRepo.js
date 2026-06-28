@@ -1,4 +1,4 @@
-const { dbConnection } = require('../db_connection');
+﻿const { dbConnection } = require('../db/connection');
 
 // Login/signup database stuff. Heads up: findUserByEmail returns the whole user row
 // including the password hash, so the service has to keep that out of any response.

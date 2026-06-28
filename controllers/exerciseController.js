@@ -6,7 +6,7 @@ const {
   getTargetList,
   getEquipmentList,
 } = require('../services/exerciseService');
-const { exerciseRepo } = require('../repositories/exerciseRepo');
+const { exerciseRepo } = require('../schemas/exerciseRepo');
 
 function parseJsonColumn(value) {
   if (!value) return [];
