@@ -219,7 +219,7 @@ exports.templatesService = {
         const days = blocks
             .filter((b) => b.block_type === 'workout' && b.exercises.length > 0)
             .map((b) => ({
-                dayNumber: b.block_index,
+                dayNumber: b.block_index + 1,
                 exercises: b.exercises.map((ex) => ({
                     id: ex.exercise_id || null,
                     name: ex.custom_exercise_name || undefined,
