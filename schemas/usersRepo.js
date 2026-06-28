@@ -1,4 +1,4 @@
-const { dbConnection } = require('../db_connection');
+﻿const { dbConnection } = require('../db/connection');
 
 // Database stuff for the users table. Note the password hash goes back to the service only.
 

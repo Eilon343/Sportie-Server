@@ -1,10 +1,10 @@
 require('dotenv').config();
-const mysql = require('mysql2/promise');
 const bcrypt = require('bcrypt');
+const path = require('path');
 const data = require('./ListOfTrainees.json');
-const { dbConnection } = require('./db_connection');
+const { dbConnection } = require('./connection');
 
-// Wipes the user/trainer/trainee tables and refills them from ListOfTrainees.json.
+// Wipes the user/trainer/trainee tables and refills them from db/ListOfTrainees.json.
 async function seedDb() {
     const connection = await dbConnection.createConnection({ multipleStatements: true });
 
@@ -12,7 +12,7 @@ async function seedDb() {
         console.log('Connected to the database.');
         console.log('Cleaning database safely...');
 
-        await connection.query('use sportieDb');
+        await connection.query('USE sportieDb');
         await connection.query('SET FOREIGN_KEY_CHECKS = 0');
         await connection.query('TRUNCATE TABLE trainer_monthly_activity');
         await connection.query('TRUNCATE TABLE trainees');
@@ -21,12 +21,11 @@ async function seedDb() {
         await connection.query('SET FOREIGN_KEY_CHECKS = 1');
 
         console.log('Database cleaned. Starting seeding...');
-        console.log('Seeding the database with data...');
-        //insert trainers
+
         for (const trainer of data.trainers) {
-            console.log("Processing ID:", trainer.id);
+            console.log('Processing ID:', trainer.id);
             const hashPassword = await bcrypt.hash(trainer.password, 10);
-            const [result] = await connection.execute(
+            await connection.execute(
                 'INSERT INTO users (user_id, email, password, role) VALUES (?, ?, ?, ?)',
                 [trainer.id, trainer.email, hashPassword, 'trainer']
             );
@@ -41,9 +40,10 @@ async function seedDb() {
                 );
             }
         }
+
         for (const trainee of data.trainees) {
             const hashPassword = await bcrypt.hash(trainee.password, 10);
-            const [result] = await connection.execute(
+            await connection.execute(
                 'INSERT INTO users (user_id, email, password, role) VALUES (?, ?, ?, ?)',
                 [trainee.id, trainee.email, hashPassword, 'trainee']
             );
@@ -57,12 +57,15 @@ async function seedDb() {
                     trainee.lastActivity,
                     trainee.avatarColor,
                     trainee.avatarUrl,
-                    trainee.trainerId
+                    trainee.trainerId,
                 ]
             );
         }
+
+        console.log('Seeding complete.');
     } catch (error) {
         console.error('Error occurred while seeding the database:', error);
+        process.exitCode = 1;
     } finally {
         await connection.end();
         console.log('Database connection closed.');

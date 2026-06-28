@@ -1,21 +1,20 @@
 require('dotenv').config();
 const fs = require('fs');
-const { dbConnection } = require('./db_connection');
+const path = require('path');
+const { dbConnection } = require('./connection');
 
-// One-shot migration runner. Reuses the app's db_connection.js (same mysql2 + SSL
-// config used for TiDB). Mirrors db_init.js, but takes a file path and logs each
-// statement individually.
+// One-shot migration runner. Runs a single SQL file and logs each statement.
 //
-// Usage: node migrate.js [path/to/file.sql]   (defaults to the analytics migration)
+// Usage: node db/migrate.js [path/to/file.sql]
+//   Defaults to db/migrations/001_analytics_tables.sql when no path is given.
 
-const migrationFile = process.argv[2] || 'migrations/001_analytics_tables.sql';
+const migrationFile = process.argv[2] || path.join(__dirname, 'migrations', '001_analytics_tables.sql');
 
 async function migrate() {
     const conn = await dbConnection.createConnection({ multipleStatements: true });
     const sql = fs.readFileSync(migrationFile, 'utf-8');
 
-    // Strip full-line comments, then split into individual statements so each can
-    // be logged on its own.
+    // Strip full-line comments, then split into individual statements.
     const statements = sql
         .split('\n')
         .filter((line) => !line.trim().startsWith('--'))

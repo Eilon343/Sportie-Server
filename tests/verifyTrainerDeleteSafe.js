@@ -1,5 +1,5 @@
-require('dotenv').config();
-const { dbConnection } = require('../db_connection');
+﻿require('dotenv').config();
+const { dbConnection } = require('../db/connection');
 
 // Self-contained, SAFE deleteTrainer test. Creates its OWN throwaway trainer + trainee,
 // deletes the trainer via the API, proves the trainee survives unassigned, then cleans up.
@@ -75,7 +75,7 @@ async function main() {
             [testTraineeId]
         );
         const survived = after.length === 1 && after[0].trainer_id === null;
-        console.log(survived ? 'trainee survived, unassigned ✓' : 'DATA LOSS!');
+        console.log(survived ? 'trainee survived, unassigned âœ“' : 'DATA LOSS!');
         console.log(`${survived ? 'PASS' : 'FAIL'}  trainee ${testTraineeId} still exists with trainer_id IS NULL`);
         console.table(after);
         if (!survived) pass = false;
@@ -83,13 +83,13 @@ async function main() {
         const [trainerGone] = await conn.execute('SELECT trainer_id FROM trainers WHERE trainer_id = ?', [testTrainerId]);
         const [userGone] = await conn.execute('SELECT user_id FROM users WHERE user_id = ?', [testTrainerId]);
         const gone = trainerGone.length === 0 && userGone.length === 0;
-        console.log(`${gone ? 'PASS' : 'FAIL'}  test trainer+user rows are gone (cascade) — trainers:${trainerGone.length} users:${userGone.length}`);
+        console.log(`${gone ? 'PASS' : 'FAIL'}  test trainer+user rows are gone (cascade) â€” trainers:${trainerGone.length} users:${userGone.length}`);
         if (!gone) pass = false;
     } catch (error) {
         console.error('\nTest error:', error.message);
         pass = false;
     } finally {
-        // ---- 5. CLEANUP — only the ids this script created ----
+        // ---- 5. CLEANUP â€” only the ids this script created ----
         console.log('\n=== 5. CLEANUP ===');
         try {
             if (testTraineeId !== null) {

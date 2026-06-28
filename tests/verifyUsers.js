@@ -1,5 +1,5 @@
-require('dotenv').config();
-const { dbConnection } = require('../db_connection');
+﻿require('dotenv').config();
+const { dbConnection } = require('../db/connection');
 const bcrypt = require('bcrypt');
 
 // Self-contained, SAFE verification for the users/changePassword refactor. Creates its
@@ -102,7 +102,7 @@ async function main() {
         console.error('\nTest error:', error.message);
         pass = false;
     } finally {
-        // ---- 7. CLEANUP — only the id this script created ----
+        // ---- 7. CLEANUP â€” only the id this script created ----
         console.log('\n=== 7. CLEANUP ===');
         try {
             if (userId !== null && !FORBIDDEN_USER_IDS.includes(Number(userId))) {

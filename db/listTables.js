@@ -1,7 +1,7 @@
 require('dotenv').config();
-const { dbConnection } = require('./db_connection');
+const { dbConnection } = require('./connection');
 
-// Throwaway, read-only script: list all tables in the database.
+// Read-only script: list all tables in the database.
 async function listTables() {
     let connection;
     try {
@@ -13,7 +13,6 @@ async function listTables() {
             return;
         }
 
-        // SHOW TABLES returns rows keyed by `Tables_in_<dbname>`; normalize for console.table.
         const tables = rows.map((row, i) => ({
             '#': i + 1,
             table: Object.values(row)[0],

@@ -1,7 +1,7 @@
-require('dotenv').config();
-const { dbConnection } = require('../db_connection');
+﻿require('dotenv').config();
+const { dbConnection } = require('../db/connection');
 
-// Throwaway, read-only script: shows what a trainee has been assigned — their workout
+// Throwaway, read-only script: shows what a trainee has been assigned â€” their workout
 // plans, the exercises in their active plan, and their meal plans. Takes a traineeId
 // from the command line (defaults to 12). Reuses the project's dbConnection.
 const traineeId = process.argv[2] || 12;

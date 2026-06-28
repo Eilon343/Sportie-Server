@@ -1,7 +1,7 @@
-require('dotenv').config();
-const { dbConnection } = require('../db_connection');
+﻿require('dotenv').config();
+const { dbConnection } = require('../db/connection');
 
-// Throwaway, read-only script: checks the Templates feature DB state — whether the
+// Throwaway, read-only script: checks the Templates feature DB state â€” whether the
 // is_active columns exist (migration 005), what real template ids/owners are there,
 // and how many templates exist. Uses the project's connectionection so TiDB's SSL cert is trusted.
 async function check() {
