@@ -3,7 +3,7 @@ const { isInvalidId } = require('../utils/validation');
 
 exports.traineesController = {
     // Gets all the trainees that belong to one trainer. Used by the dashboard.
-    async getTraineesByTrainer(req, res) {
+    async getTraineesByTrainer(req, res, next) {
         const { trainerId } = req.params;
         if (isInvalidId(trainerId)) {
             return res.status(400).json({ message: 'Invalid trainerId: must be a positive integer' });
@@ -16,12 +16,12 @@ exports.traineesController = {
             res.status(200).json(rows);
         } catch (error) {
             console.error('Error fetching trainees:', error);
-            res.status(500).send('Error fetching trainees: ' + error.message);
+            next(error);
         }
     },
 
     // Gets a single trainee by id, or 404 if not found.
-    async getTraineeById(req, res) {
+    async getTraineeById(req, res, next) {
         const { traineeId } = req.params;
         if (isInvalidId(traineeId)) {
             return res.status(400).json({ message: 'Invalid traineeId: must be a positive integer' });
@@ -34,16 +34,20 @@ exports.traineesController = {
             res.status(200).json(trainee);
         } catch (error) {
             console.error('Error fetching trainee:', error);
-            res.status(500).send('Error fetching trainee: ' + error.message);
+            next(error);
         }
     },
 
     // Lets a trainee edit their own profile. Only safe fields like name, contact, goal, avatar
     // are allowed here, not status/progress/trainer/weight.
-    async updateOwnProfile(req, res) {
+    async updateOwnProfile(req, res, next) {
         const { traineeId } = req.params;
         if (isInvalidId(traineeId)) {
             return res.status(400).json({ message: 'Invalid traineeId: must be a positive integer' });
+        }
+        const email = req.body && req.body.email;
+        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email))) {
+            return res.status(400).json({ message: 'A valid email is required' });
         }
         try {
             const updated = await traineesService.updateOwnProfile(traineeId, req.body);
@@ -54,7 +58,7 @@ exports.traineesController = {
         } catch (error) {
             if (error.status) return res.status(error.status).json({ message: error.message });
             console.error('Error updating trainee profile:', error);
-            res.status(500).send('Error updating trainee profile: ' + error.message);
+            next(error);
         }
     },
 };

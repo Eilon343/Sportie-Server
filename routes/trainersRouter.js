@@ -5,7 +5,7 @@ const trainersRouter = Router();
 
 // Get all trainers.
 trainersRouter.get('/', trainersController.getAllTrainers);
-// Get one trainer by id.
+// Get one trainer by id (only your own).
 trainersRouter.get('/:trainerId', trainersController.getTrainerById);
 // How many of the trainer's trainees were active this month.
 trainersRouter.get('/:trainerId/monthly-activity', trainersController.getMonthlyActiveTrainees);

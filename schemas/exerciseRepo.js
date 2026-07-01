@@ -58,14 +58,15 @@ exports.exerciseRepo = {
         const pool = await dbConnection.createConnection();
         try {
             await pool.execute(
-                `INSERT INTO exercises (exercise_id, name, body_part, target, equipment, difficulty, category, secondary_muscles, instructions, description)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                `INSERT INTO exercises (exercise_id, name, body_part, target, equipment, gif_url, difficulty, category, secondary_muscles, instructions, description)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     exercise.exerciseId,
                     exercise.name || 'Custom Exercise',
                     exercise.bodyPart || 'general',
                     exercise.target || 'general',
                     exercise.equipment || 'none',
+                    exercise.gifUrl || '',
                     exercise.difficulty || 'intermediate',
                     exercise.category || null,
                     JSON.stringify(exercise.secondaryMuscles || []),
@@ -86,14 +87,15 @@ exports.exerciseRepo = {
         for (const ex of exercises) {
             try {
                 await pool.execute(
-                    `INSERT IGNORE INTO exercises (exercise_id, name, body_part, target, equipment, difficulty, category, secondary_muscles, instructions, description)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    `INSERT IGNORE INTO exercises (exercise_id, name, body_part, target, equipment, gif_url, difficulty, category, secondary_muscles, instructions, description)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [
                         ex.id,
                         ex.name || 'Unknown',
                         ex.bodyPart || 'general',
                         ex.target || 'general',
                         ex.equipment || 'none',
+                        ex.gifUrl || '',
                         ex.difficulty || 'intermediate',
                         ex.category || null,
                         JSON.stringify(ex.secondaryMuscles || []),

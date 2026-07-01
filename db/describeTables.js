@@ -12,7 +12,7 @@ const { dbConnection } = require('./connection');
 async function describe() {
     let connection;
     try {
-        connection = await dbConnection.createConnection();
+        connection = await dbConnection.createRawConnection();
 
         const only     = process.argv[2] && process.argv[2] !== 'all' ? process.argv[2] : null;
         const rowLimit = Number(process.argv[3]) > 0 ? Number(process.argv[3]) : 50;

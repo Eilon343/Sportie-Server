@@ -1,7 +1,7 @@
 ﻿const { dbConnection } = require('../db/connection');
 
-// All trainees SQL lives here, parameterized, one method per query. Connection per
-// call via dbConnection.createConnection() â€” matching the analytics repo pattern.
+// All trainees SQL lives here, parameterized, one method per query. Reads run through
+// the shared connection pool; writes use a pooled connection for their transaction.
 
 exports.traineesRepo = {
     // Gets all trainees belonging to a given trainer from the trainees table.
@@ -21,7 +21,7 @@ exports.traineesRepo = {
     // Updates both the users row and the trainees row together in one transaction.
     // Returns how many trainee rows changed (0 means the trainee wasn't found).
     async updateProfileTx(traineeId, userFields, traineeFields) {
-        const connection = await dbConnection.createConnection();
+        const connection = await dbConnection.getConnection();
         try {
             await connection.beginTransaction();
 
@@ -52,7 +52,7 @@ exports.traineesRepo = {
             await connection.rollback();
             throw error;
         } finally {
-            connection.end();
+            connection.release();
         }
     },
 };

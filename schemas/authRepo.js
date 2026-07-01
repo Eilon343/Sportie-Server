@@ -7,7 +7,7 @@ exports.authRepo = {
     // Inserts the users row and the trainers row in a single transaction.
     // Rolls back both if either insert fails. Returns the new user_id.
     async createTrainerAccount(email, hashedPassword, name) {
-        const conn = await dbConnection.createConnection();
+        const conn = await dbConnection.getConnection();
         await conn.beginTransaction();
         try {
             const [userResult] = await conn.execute(
@@ -25,7 +25,7 @@ exports.authRepo = {
             await conn.rollback();
             throw error;
         } finally {
-            await conn.end();
+            conn.release();
         }
     },
 

@@ -18,7 +18,7 @@ function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) 
 function pick(arr) { return arr[randInt(0, arr.length - 1)]; }
 
 async function seed() {
-    const conn = await dbConnection.createConnection();
+    const conn = await dbConnection.createRawConnection();
     const counts = { training_plans: 0, workout_sessions: 0, logged_sets: 0, trainee_metrics: 0 };
 
     async function run(label, sql, params) {

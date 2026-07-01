@@ -35,7 +35,7 @@ exports.trainersRepo = {
     // Updates the trainer's users row and trainers row together in one transaction.
     // Returns how many trainer rows changed (0 means the trainer wasn't found).
     async updateProfileTx(trainerId, userFields, trainerFields) {
-        const connection = await dbConnection.createConnection();
+        const connection = await dbConnection.getConnection();
         try {
             await connection.beginTransaction();
 
@@ -69,14 +69,14 @@ exports.trainersRepo = {
             await connection.rollback();
             throw error;
         } finally {
-            connection.end();
+            connection.release();
         }
     },
 
     // Makes sure the trainee belongs to this trainer, then updates them, all in one transaction.
     // Returns { found, changed } so the caller knows if it existed and if anything changed.
     async updateManagedTraineeTx(trainerId, traineeId, fields) {
-        const connection = await dbConnection.createConnection();
+        const connection = await dbConnection.getConnection();
         try {
             await connection.beginTransaction();
 
@@ -106,14 +106,14 @@ exports.trainersRepo = {
             await connection.rollback();
             throw error;
         } finally {
-            connection.end();
+            connection.release();
         }
     },
 
     // Links a free trainee to a trainer, in one transaction. Tells you 'not_found',
     // 'already_assigned', or 'assigned' depending on what happened.
     async assignTraineeTx(trainerId, traineeId) {
-        const connection = await dbConnection.createConnection();
+        const connection = await dbConnection.getConnection();
         try {
             await connection.beginTransaction();
 
@@ -140,7 +140,7 @@ exports.trainersRepo = {
             await connection.rollback();
             throw error;
         } finally {
-            connection.end();
+            connection.release();
         }
     },
 
@@ -159,7 +159,7 @@ exports.trainersRepo = {
     // then deletes the user row (which cascades to the trainers row). All in one transaction.
     // Returns how many user rows were deleted (0 means the trainer wasn't found).
     async deleteTrainerTx(trainerId) {
-        const connection = await dbConnection.createConnection();
+        const connection = await dbConnection.getConnection();
         try {
             await connection.beginTransaction();
 
@@ -182,7 +182,7 @@ exports.trainersRepo = {
             await connection.rollback();
             throw error;
         } finally {
-            connection.end();
+            connection.release();
         }
     },
 };

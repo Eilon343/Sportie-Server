@@ -76,12 +76,11 @@ exports.templatesRepo = {
     // Saves a whole workout template (template -> blocks -> exercises) in one transaction.
     // Only 'workout' blocks get exercise rows; cardio carries notes, rest carries nothing.
     async saveWorkoutTemplateTx(trainerId, { name, mode, goal, blocks }) {
-        const connection = await dbConnection.createConnection();
+        const connection = await dbConnection.getConnection();
         try {
             await connection.beginTransaction();
 
-            const tplValues = [trainerId, name ?? null, mode ?? 'day-specific', goal ?? null]; // DEBUG temp
-            console.log('[DEBUG] workout_templates values:', tplValues); // DEBUG temp
+            const tplValues = [trainerId, name ?? null, mode ?? 'day-specific', goal ?? null];
             const [tplResult] = await connection.execute(
                 `INSERT INTO workout_templates (trainer_id, name, mode, goal) VALUES (?, ?, ?, ?)`,
                 tplValues
@@ -91,8 +90,7 @@ exports.templatesRepo = {
             for (const block of blocks) {
                 // Frontend sends { index, label, type, notes, dayIndex, trainingLetter, exercises }.
                 const blockType = block.type ?? 'workout';
-                const blockValues = [templateId, block.index ?? null, block.label ?? null, blockType, block.notes ?? null]; // DEBUG temp
-                console.log('[DEBUG] workout_template_blocks values:', blockValues); // DEBUG temp
+                const blockValues = [templateId, block.index ?? null, block.label ?? null, blockType, block.notes ?? null];
                 const [blockResult] = await connection.execute(
                     `INSERT INTO workout_template_blocks (template_id, block_index, label, block_type, notes)
                      VALUES (?, ?, ?, ?, ?)`,
@@ -102,7 +100,7 @@ exports.templatesRepo = {
 
                 // Only workout blocks hold exercises; cardio/rest skip this insert entirely.
                 if (blockType === 'workout' && Array.isArray(block.exercises) && block.exercises.length > 0) {
-                    // Frontend sends exercise names (strings), not ExerciseDB ids â†’ store as custom_exercise_name.
+                    // Frontend sends exercise names (strings), not ExerciseDB ids -> store as custom_exercise_name.
                     const values = block.exercises.map((ex) => [
                         blockId,
                         null,
@@ -111,7 +109,6 @@ exports.templatesRepo = {
                         ex.reps ?? null,
                         ex.rest ?? null
                     ]);
-                    console.log('[DEBUG] workout_template_exercises values:', values); // DEBUG temp
                     await connection.query(
                         `INSERT INTO workout_template_exercises
                          (block_id, exercise_id, custom_exercise_name, sets, reps, rest_seconds)
@@ -127,7 +124,7 @@ exports.templatesRepo = {
             await connection.rollback();
             throw error;
         } finally {
-            connection.end();
+            connection.release();
         }
     },
 
@@ -144,7 +141,7 @@ exports.templatesRepo = {
     // Edits a workout template in place (delete-and-reinsert, mirroring planRepo.updatePlanTx).
     // Returns false if the template doesn't exist (so the caller can 404), true otherwise.
     async updateWorkoutTemplateTx(templateId, { name, mode, goal, blocks }) {
-        const connection = await dbConnection.createConnection();
+        const connection = await dbConnection.getConnection();
         try {
             await connection.beginTransaction();
 
@@ -201,14 +198,14 @@ exports.templatesRepo = {
             await connection.rollback();
             throw error;
         } finally {
-            connection.end();
+            connection.release();
         }
     },
 
     // After a new plan is saved (via planService.savePlan), flip every OTHER active plan
     // for the trainee to inactive so exactly the new plan stays active. One atomic update.
     async deactivateOtherActivePlansTx(traineeId, keepPlanId) {
-        const connection = await dbConnection.createConnection();
+        const connection = await dbConnection.getConnection();
         try {
             await connection.beginTransaction();
             await connection.execute(
@@ -220,7 +217,7 @@ exports.templatesRepo = {
             await connection.rollback();
             throw error;
         } finally {
-            connection.end();
+            connection.release();
         }
     },
 
@@ -277,7 +274,7 @@ exports.templatesRepo = {
     // Saves a whole meal template (template -> slots -> options) in one transaction.
     async saveMealTemplateTx(trainerId, { name, slots, totals }) {
         const t = totals || {};
-        const connection = await dbConnection.createConnection();
+        const connection = await dbConnection.getConnection();
         try {
             await connection.beginTransaction();
 
@@ -289,7 +286,7 @@ exports.templatesRepo = {
             );
             const templateId = tplResult.insertId;
 
-            // Frontend sends slots as { label, options }; slot_index is derived from order (0,1,2â€¦).
+            // Frontend sends slots as { label, options }; slot_index is derived from order (0,1,2...).
             for (let slotIndex = 0; slotIndex < slots.length; slotIndex++) {
                 const slot = slots[slotIndex];
                 const [slotResult] = await connection.execute(
@@ -299,7 +296,7 @@ exports.templatesRepo = {
                 const slotId = slotResult.insertId;
 
                 if (Array.isArray(slot.options) && slot.options.length > 0) {
-                    // meal_name is NOT NULL â€” drop options the frontend sent without a name.
+                    // meal_name is NOT NULL — drop options the frontend sent without a name.
                     const named = slot.options.filter((o) => o.name != null && o.name !== '');
                     if (named.length > 0) {
                         const values = named.map((o) => optionValuesFromPayload(slotId, o));
@@ -320,7 +317,7 @@ exports.templatesRepo = {
             await connection.rollback();
             throw error;
         } finally {
-            connection.end();
+            connection.release();
         }
     },
 
@@ -338,7 +335,7 @@ exports.templatesRepo = {
     // Returns false if the template doesn't exist (so the caller can 404), true otherwise.
     async updateMealTemplateTx(templateId, { name, slots, totals }) {
         const t = totals || {};
-        const connection = await dbConnection.createConnection();
+        const connection = await dbConnection.getConnection();
         try {
             await connection.beginTransaction();
 
@@ -394,7 +391,7 @@ exports.templatesRepo = {
             await connection.rollback();
             throw error;
         } finally {
-            connection.end();
+            connection.release();
         }
     },
 
@@ -402,7 +399,7 @@ exports.templatesRepo = {
     // then create a new active meal_plan with all slots+options copied from the template.
     async assignMealTemplateTx(traineeId, sourceTemplateId, { name, slots, totals }) {
         const t = totals || {};
-        const connection = await dbConnection.createConnection();
+        const connection = await dbConnection.getConnection();
         try {
             await connection.beginTransaction();
 
@@ -447,7 +444,7 @@ exports.templatesRepo = {
             await connection.rollback();
             throw error;
         } finally {
-            connection.end();
+            connection.release();
         }
     }
 };
@@ -474,7 +471,7 @@ function optionValues(slotId, o) {
 
 // Builds a meal option row tuple from a raw FRONTEND option payload (the save path).
 // Frontend shape: { source, mealId, name, thumb, quantity, unit, per100g:{...}, macros:{...} }.
-// macros are scaled/derived values â€” ignored; we persist per-100g only. Caller filters out
+// macros are scaled/derived values — ignored; we persist per-100g only. Caller filters out
 // options with no name (meal_name is NOT NULL).
 function optionValuesFromPayload(slotId, o) {
     return [

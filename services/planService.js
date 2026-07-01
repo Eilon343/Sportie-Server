@@ -30,7 +30,7 @@ function calcMealPlanTotals(slots) {
 exports.planService = {
     // Saves a brand-new training plan plus all its exercises in one transaction.
     // Returns the new plan's id.
-    async savePlan({ traineeId, goal, daysPerWeek, days }) {
+    async savePlan({ traineeId, goal, daysPerWeek, days, deactivateOthers = false }) {
         // Checked before the transaction so a bad trainee_id is a clean 404, not an
         // FK 500 (and not swallowed by the generic catch below).
         if (!(await planRepo.traineeExists(traineeId))) {
@@ -74,7 +74,7 @@ exports.planService = {
                     }
                 }
             };
-            const planId = await planRepo.savePlan({ traineeId, goal, daysPerWeek }, exerciseRows);
+            const planId = await planRepo.savePlan({ traineeId, goal, daysPerWeek }, exerciseRows, { deactivateOthers });
             return planId;
         } catch (error) {
             console.error('Error saving plan:', error);

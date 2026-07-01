@@ -3,7 +3,7 @@ const { isInvalidId } = require('../utils/validation');
 
 exports.usersController = {
     // Changes a user's password.
-    async changePassword(req, res) {
+    async changePassword(req, res, next) {
         const { userId } = req.params;
         if (isInvalidId(userId)) {
             return res.status(400).json({ message: 'Invalid userId: must be a positive integer' });
@@ -14,7 +14,7 @@ exports.usersController = {
         } catch (error) {
             if (error.status) return res.status(error.status).json({ message: error.message });
             console.error('Error changing password:', error);
-            res.status(500).send('Error changing password: ' + error.message);
+            next(error);
         }
     },
 };

@@ -14,7 +14,7 @@ const {
 
 exports.mealController = {
   // Searches meals by a query string (the "q" param is required).
-  async searchMeals(req, res) {
+  async searchMeals(req, res, next) {
     try {
       const { q } = req.query;
       if (!q) {
@@ -24,12 +24,12 @@ exports.mealController = {
       res.status(200).json(meals);
     } catch (error) {
       console.error('Error searching meals:', error);
-      res.status(500).send('Error searching meals: ' + error.message);
+      next(error);
     }
   },
 
   // Gets meals whose name starts with a given letter.
-  async searchByFirstLetter(req, res) {
+  async searchByFirstLetter(req, res, next) {
     const { letter } = req.params;
     // TheMealDB's f= filter expects exactly one alphabetic character.
     if (!/^[a-zA-Z]$/.test(letter)) {
@@ -40,12 +40,12 @@ exports.mealController = {
       res.status(200).json(meals);
     } catch (error) {
       console.error('Error fetching meals by letter:', error);
-      res.status(500).send('Error fetching meals by letter: ' + error.message);
+      next(error);
     }
   },
 
   // Gets a single meal by its id, or 404 if it doesn't exist.
-  async getMealById(req, res) {
+  async getMealById(req, res, next) {
     const { id } = req.params;
     // TheMealDB meal ids are numeric.
     if (!/^\d+$/.test(id)) {
@@ -59,95 +59,95 @@ exports.mealController = {
       res.status(200).json(meal);
     } catch (error) {
       console.error('Error fetching meal:', error);
-      res.status(500).send('Error fetching meal: ' + error.message);
+      next(error);
     }
   },
 
   // Picks a random meal, handy for suggestions.
-  async getRandomMeal(req, res) {
+  async getRandomMeal(req, res, next) {
     try {
       const meal = await getRandomMeal();
       res.status(200).json(meal);
     } catch (error) {
       console.error('Error fetching random meal:', error);
-      res.status(500).send('Error fetching random meal: ' + error.message);
+      next(error);
     }
   },
 
   // Gets all the meal categories (with their details).
-  async getCategories(req, res) {
+  async getCategories(req, res, next) {
     try {
       const categories = await getCategories();
       res.status(200).json(categories);
     } catch (error) {
       console.error('Error fetching categories:', error);
-      res.status(500).send('Error fetching categories: ' + error.message);
+      next(error);
     }
   },
 
   // Gets meals that belong to a given category.
-  async filterByCategory(req, res) {
+  async filterByCategory(req, res, next) {
     try {
       const meals = await filterByCategory(req.params.category);
       res.status(200).json(meals);
     } catch (error) {
       console.error('Error filtering by category:', error);
-      res.status(500).send('Error filtering by category: ' + error.message);
+      next(error);
     }
   },
 
   // Gets meals from a given area/cuisine.
-  async filterByArea(req, res) {
+  async filterByArea(req, res, next) {
     try {
       const meals = await filterByArea(req.params.area);
       res.status(200).json(meals);
     } catch (error) {
       console.error('Error filtering by area:', error);
-      res.status(500).send('Error filtering by area: ' + error.message);
+      next(error);
     }
   },
 
   // Gets meals that use a given ingredient.
-  async filterByIngredient(req, res) {
+  async filterByIngredient(req, res, next) {
     try {
       const meals = await filterByIngredient(req.params.ingredient);
       res.status(200).json(meals);
     } catch (error) {
       console.error('Error filtering by ingredient:', error);
-      res.status(500).send('Error filtering by ingredient: ' + error.message);
+      next(error);
     }
   },
 
   // Returns just the category names, for dropdowns.
-  async listCategoryNames(req, res) {
+  async listCategoryNames(req, res, next) {
     try {
       const names = await listCategoryNames();
       res.status(200).json(names);
     } catch (error) {
       console.error('Error listing category names:', error);
-      res.status(500).send('Error listing category names: ' + error.message);
+      next(error);
     }
   },
 
   // Returns the list of areas/cuisines, for dropdowns.
-  async listAreas(req, res) {
+  async listAreas(req, res, next) {
     try {
       const areas = await listAreas();
       res.status(200).json(areas);
     } catch (error) {
       console.error('Error listing areas:', error);
-      res.status(500).send('Error listing areas: ' + error.message);
+      next(error);
     }
   },
 
   // Returns the list of ingredients, for dropdowns.
-  async listIngredients(req, res) {
+  async listIngredients(req, res, next) {
     try {
       const ingredients = await listIngredients();
       res.status(200).json(ingredients);
     } catch (error) {
       console.error('Error listing ingredients:', error);
-      res.status(500).send('Error listing ingredients: ' + error.message);
+      next(error);
     }
   },
 };

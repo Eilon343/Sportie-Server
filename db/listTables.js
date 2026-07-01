@@ -5,7 +5,7 @@ const { dbConnection } = require('./connection');
 async function listTables() {
     let connection;
     try {
-        connection = await dbConnection.createConnection();
+        connection = await dbConnection.createRawConnection();
         const [rows] = await connection.query('SHOW TABLES;');
 
         if (!rows.length) {

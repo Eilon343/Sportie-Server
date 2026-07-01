@@ -5,7 +5,7 @@ exports.templatesController = {
     //  WORKOUT 
 
     // GET /api/templates/workout?trainerId= — list a trainer's workout templates.
-    async listWorkoutTemplates(req, res) {
+    async listWorkoutTemplates(req, res, next) {
         try {
             const { trainerId } = req.query;
             if (!trainerId) return res.status(400).json({ message: 'Query "trainerId" is required' });
@@ -15,14 +15,13 @@ exports.templatesController = {
             res.status(200).json(templates);
         } catch (error) {
             console.error('Error listing workout templates:', error);
-            res.status(500).json({ message: 'Error listing workout templates: ' + error.message });
+            next(error);
         }
     },
 
     // POST /api/templates/workout — save a new workout template (409 if over the cap).
-    async saveWorkoutTemplate(req, res) {
+    async saveWorkoutTemplate(req, res, next) {
         try {
-            console.log('[DEBUG] saveWorkoutTemplate req.body:', JSON.stringify(req.body)); // DEBUG temp
             const { trainerId, name, mode, goal, blocks } = req.body;
             if (!trainerId) return res.status(400).json({ message: 'Field "trainerId" is required' });
             if (isInvalidId(String(trainerId))) return res.status(400).json({ message: 'Invalid trainerId: must be a positive integer' });
@@ -33,12 +32,12 @@ exports.templatesController = {
         } catch (error) {
             if (error.status) return res.status(error.status).json({ message: error.message });
             console.error('Error saving workout template:', error);
-            res.status(500).json({ message: 'Error saving workout template: ' + error.message });
+            next(error);
         }
     },
 
     // DELETE /api/templates/workout/:id — delete a workout template (cascades).
-    async deleteWorkoutTemplate(req, res) {
+    async deleteWorkoutTemplate(req, res, next) {
         try {
             const { id } = req.params;
             if (isInvalidId(id)) return res.status(400).json({ message: 'Invalid template id: must be a positive integer' });
@@ -47,12 +46,12 @@ exports.templatesController = {
             res.status(200).json({ success: true });
         } catch (error) {
             console.error('Error deleting workout template:', error);
-            res.status(500).json({ message: 'Error deleting workout template: ' + error.message });
+            next(error);
         }
     },
 
     // PUT /api/templates/workout/:id — edit an existing workout template in place.
-    async updateWorkoutTemplate(req, res) {
+    async updateWorkoutTemplate(req, res, next) {
         try {
             const { id } = req.params;
             if (isInvalidId(id)) return res.status(400).json({ message: 'Invalid template id: must be a positive integer' });
@@ -64,12 +63,12 @@ exports.templatesController = {
         } catch (error) {
             if (error.status) return res.status(error.status).json({ message: error.message });
             console.error('Error updating workout template:', error);
-            res.status(500).json({ message: 'Error updating workout template: ' + error.message });
+            next(error);
         }
     },
 
     // POST /api/templates/workout/:id/assign — copy the template into a new active plan for a trainee.
-    async assignWorkoutTemplate(req, res) {
+    async assignWorkoutTemplate(req, res, next) {
         try {
             const { id } = req.params;
             if (isInvalidId(id)) return res.status(400).json({ message: 'Invalid template id: must be a positive integer' });
@@ -82,14 +81,14 @@ exports.templatesController = {
         } catch (error) {
             if (error.status) return res.status(error.status).json({ message: error.message });
             console.error('Error assigning workout template:', error);
-            res.status(500).json({ message: 'Error assigning workout template: ' + error.message });
+            next(error);
         }
     },
 
     //  MEAL 
 
     // GET /api/templates/meal?trainerId= — list a trainer's meal templates.
-    async listMealTemplates(req, res) {
+    async listMealTemplates(req, res, next) {
         try {
             const { trainerId } = req.query;
             if (!trainerId) return res.status(400).json({ message: 'Query "trainerId" is required' });
@@ -99,14 +98,13 @@ exports.templatesController = {
             res.status(200).json(templates);
         } catch (error) {
             console.error('Error listing meal templates:', error);
-            res.status(500).json({ message: 'Error listing meal templates: ' + error.message });
+            next(error);
         }
     },
 
     // POST /api/templates/meal — save a new meal template (409 if over the cap).
-    async saveMealTemplate(req, res) {
+    async saveMealTemplate(req, res, next) {
         try {
-            console.log('[DEBUG] saveMealTemplate req.body:', JSON.stringify(req.body, null, 2)); // DEBUG temp
             const { trainerId, name, slots } = req.body;
             if (!trainerId) return res.status(400).json({ message: 'Field "trainerId" is required' });
             if (isInvalidId(String(trainerId))) return res.status(400).json({ message: 'Invalid trainerId: must be a positive integer' });
@@ -117,12 +115,12 @@ exports.templatesController = {
         } catch (error) {
             if (error.status) return res.status(error.status).json({ message: error.message });
             console.error('Error saving meal template:', error);
-            res.status(500).json({ message: 'Error saving meal template: ' + error.message });
+            next(error);
         }
     },
 
     // DELETE /api/templates/meal/:id — delete a meal template (cascades).
-    async deleteMealTemplate(req, res) {
+    async deleteMealTemplate(req, res, next) {
         try {
             const { id } = req.params;
             if (isInvalidId(id)) return res.status(400).json({ message: 'Invalid template id: must be a positive integer' });
@@ -131,12 +129,12 @@ exports.templatesController = {
             res.status(200).json({ success: true });
         } catch (error) {
             console.error('Error deleting meal template:', error);
-            res.status(500).json({ message: 'Error deleting meal template: ' + error.message });
+            next(error);
         }
     },
 
     // PUT /api/templates/meal/:id — edit an existing meal template in place.
-    async updateMealTemplate(req, res) {
+    async updateMealTemplate(req, res, next) {
         try {
             const { id } = req.params;
             if (isInvalidId(id)) return res.status(400).json({ message: 'Invalid template id: must be a positive integer' });
@@ -148,12 +146,12 @@ exports.templatesController = {
         } catch (error) {
             if (error.status) return res.status(error.status).json({ message: error.message });
             console.error('Error updating meal template:', error);
-            res.status(500).json({ message: 'Error updating meal template: ' + error.message });
+            next(error);
         }
     },
 
     // POST /api/templates/meal/:id/assign — copy the template into a new active meal plan for a trainee.
-    async assignMealTemplate(req, res) {
+    async assignMealTemplate(req, res, next) {
         try {
             const { id } = req.params;
             if (isInvalidId(id)) return res.status(400).json({ message: 'Invalid template id: must be a positive integer' });
@@ -166,7 +164,7 @@ exports.templatesController = {
         } catch (error) {
             if (error.status) return res.status(error.status).json({ message: error.message });
             console.error('Error assigning meal template:', error);
-            res.status(500).json({ message: 'Error assigning meal template: ' + error.message });
+            next(error);
         }
     }
 };

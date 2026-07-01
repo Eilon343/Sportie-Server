@@ -32,7 +32,7 @@ function normalizeDbRow(row) {
 exports.exerciseController = {
   // Gets a list of exercises. When the `search` query param is present, checks the local
   // DB cache first; falls back to ExerciseDB and caches any new results.
-  async getExercises(req, res) {
+  async getExercises(req, res, next) {
     try {
       const { bodyPart, target, equipment, limit, offset, search } = req.query;
 
@@ -111,57 +111,57 @@ exports.exerciseController = {
       res.status(200).json(data);
     } catch (error) {
       console.error('Error fetching exercises:', error);
-      res.status(500).send('Error fetching exercises: ' + error.message);
+      next(error);
     }
   },
 
   // Searches exercises by name.
-  async searchExercisesByName(req, res) {
+  async searchExercisesByName(req, res, next) {
     try {
       const { limit, offset } = req.query;
       const data = await searchExercisesByName(req.params.name, { limit, offset });
       res.status(200).json(data);
     } catch (error) {
       console.error('Error searching exercises:', error);
-      res.status(500).send('Error searching exercises: ' + error.message);
+      next(error);
     }
   },
 
   // Returns all the body part options you can filter by.
-  async getBodyPartList(req, res) {
+  async getBodyPartList(req, res, next) {
     try {
       const data = await getBodyPartList();
       res.status(200).json(data);
     } catch (error) {
       console.error('Error fetching body parts:', error);
-      res.status(500).send('Error fetching body parts: ' + error.message);
+      next(error);
     }
   },
 
   // Returns all the target muscle options you can filter by.
-  async getTargetList(req, res) {
+  async getTargetList(req, res, next) {
     try {
       const data = await getTargetList();
       res.status(200).json(data);
     } catch (error) {
       console.error('Error fetching targets:', error);
-      res.status(500).send('Error fetching targets: ' + error.message);
+      next(error);
     }
   },
 
   // Returns all the equipment options you can filter by.
-  async getEquipmentList(req, res) {
+  async getEquipmentList(req, res, next) {
     try {
       const data = await getEquipmentList();
       res.status(200).json(data);
     } catch (error) {
       console.error('Error fetching equipment:', error);
-      res.status(500).send('Error fetching equipment: ' + error.message);
+      next(error);
     }
   },
 
   // Gets a single exercise by its id.
-  async getExerciseById(req, res) {
+  async getExerciseById(req, res, next) {
     const { id } = req.params;
     if (!id || !id.trim()) {
       return res.status(400).json({ message: 'Parameter "id" is required' });
@@ -181,7 +181,7 @@ exports.exerciseController = {
         return res.status(404).json({ message: 'Exercise not found' });
       }
       console.error('Error fetching exercise:', error);
-      res.status(500).send('Error fetching exercise: ' + error.message);
+      next(error);
     }
   },
 };

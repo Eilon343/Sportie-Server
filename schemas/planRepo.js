@@ -12,8 +12,8 @@ exports.planRepo = {
         return rows.length > 0;
     },
 
-    async savePlan({ traineeId, goal, daysPerWeek }, exerciseRows) {
-        const connection = await dbConnection.createConnection();
+    async savePlan({ traineeId, goal, daysPerWeek }, exerciseRows, { deactivateOthers = false } = {}) {
+        const connection = await dbConnection.getConnection();
         try {
             await connection.beginTransaction();
 
@@ -33,13 +33,22 @@ exports.planRepo = {
                 );
             }
 
+            // Template-assign path: collapse to a single active plan inside the same
+            // transaction so save + deactivate can never leave two active plans.
+            if (deactivateOthers) {
+                await connection.execute(
+                    'UPDATE training_plans SET is_active = 0 WHERE trainee_id = ? AND plan_id <> ? AND is_active = 1',
+                    [traineeId, planId]
+                );
+            }
+
             await connection.commit();
             return planId;
         } catch (error) {
             await connection.rollback();
             throw error;
         } finally {
-            connection.end();
+            connection.release();
         }
     },
 
@@ -137,7 +146,7 @@ exports.planRepo = {
     // Updates a meal plan's name and macros, wipes its slots/options, then re-inserts them atomically.
     async updateMealPlanTx(planId, { name, slots, totals }) {
         const t = totals || {};
-        const connection = await dbConnection.createConnection();
+        const connection = await dbConnection.getConnection();
         try {
             await connection.beginTransaction();
 
@@ -204,13 +213,13 @@ exports.planRepo = {
             await connection.rollback();
             throw error;
         } finally {
-            connection.end();
+            connection.release();
         }
     },
 
     // Updates a plan's basics, then wipes and re-adds its exercises, all in one transaction.
     async updatePlanTx(planId, { goal, daysPerWeek }, exerciseRows) {
-        const connection = await dbConnection.createConnection();
+        const connection = await dbConnection.getConnection();
         try {
             await connection.beginTransaction();
             // Confirm the plan exists first (an UPDATE's affectedRows is 0 when the
@@ -249,7 +258,7 @@ exports.planRepo = {
             console.error('Transaction failed, rolled back:', error);
             throw error;
         } finally {
-            connection.end();
+            connection.release();
         }
     }
 };

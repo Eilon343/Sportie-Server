@@ -3,10 +3,10 @@ const { templatesController } = require('../controllers/templatesController');
 
 const templatesRoutes = Router();
 
-//  Workout templates 
-// List a trainer's workout templates (?trainerId=).
+//  Workout templates
+// List a trainer's workout templates (?trainerId=, only your own).
 templatesRoutes.get('/workout', templatesController.listWorkoutTemplates);
-// Save a new workout template.
+// Save a new workout template (under your own trainer id).
 templatesRoutes.post('/workout', templatesController.saveWorkoutTemplate);
 // Edit an existing workout template in place.
 templatesRoutes.put('/workout/:id', templatesController.updateWorkoutTemplate);
@@ -15,10 +15,10 @@ templatesRoutes.delete('/workout/:id', templatesController.deleteWorkoutTemplate
 // Assign a workout template to a trainee as a new active plan.
 templatesRoutes.post('/workout/:id/assign', templatesController.assignWorkoutTemplate);
 
-//  Meal templates 
-// List a trainer's meal templates (?trainerId=).
+//  Meal templates
+// List a trainer's meal templates (?trainerId=, only your own).
 templatesRoutes.get('/meal', templatesController.listMealTemplates);
-// Save a new meal template.
+// Save a new meal template (under your own trainer id).
 templatesRoutes.post('/meal', templatesController.saveMealTemplate);
 // Edit an existing meal template in place.
 templatesRoutes.put('/meal/:id', templatesController.updateMealTemplate);

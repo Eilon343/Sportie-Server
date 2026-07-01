@@ -6,7 +6,7 @@ const { dbConnection } = require('./connection');
 
 // Wipes the user/trainer/trainee tables and refills them from db/ListOfTrainees.json.
 async function seedDb() {
-    const connection = await dbConnection.createConnection({ multipleStatements: true });
+    const connection = await dbConnection.createRawConnection({ multipleStatements: true });
 
     try {
         console.log('Connected to the database.');

@@ -4,7 +4,7 @@ const { isInvalidId } = require('../utils/validation');
 exports.analyticsController = {
     // Lists the trainees who might be dropping off, for a given trainer. Used on the dashboard.
     //GET /api/analytics/at-risk/:trainerId
-    async getAtRisk(req, res) {
+    async getAtRisk(req, res, next) {
         const { trainerId } = req.params;
         if (isInvalidId(trainerId)) {
             return res.status(400).json({ message: 'Invalid trainerId: must be a positive integer' });
@@ -17,13 +17,13 @@ exports.analyticsController = {
             res.status(200).json(data);
         } catch (error) {
             console.error('Error fetching at-risk trainees:', error);
-            res.status(500).send('Error fetching at-risk trainees: ' + error.message);
+            next(error);
         }
     },
 
     // Total completed workouts this week (Sun-Sat) for the trainer's trainees. Dashboard tile.
     //GET /api/analytics/workouts-this-week/:trainerId
-    async getWorkoutsThisWeek(req, res) {
+    async getWorkoutsThisWeek(req, res, next) {
         const { trainerId } = req.params;
         if (isInvalidId(trainerId)) {
             return res.status(400).json({ message: 'Invalid trainerId: must be a positive integer' });
@@ -36,13 +36,13 @@ exports.analyticsController = {
             res.status(200).json(data);
         } catch (error) {
             console.error('Error fetching workouts this week:', error);
-            res.status(500).send('Error fetching workouts this week: ' + error.message);
+            next(error);
         }
     },
 
     // Shows how the trainer's trainees are spread out by attendance. Used for charts.
     //GET /api/analytics/attendance-distribution/:trainerId
-    async getAttendanceDistribution(req, res) {
+    async getAttendanceDistribution(req, res, next) {
         const { trainerId } = req.params;
         if (isInvalidId(trainerId)) {
             return res.status(400).json({ message: 'Invalid trainerId: must be a positive integer' });
@@ -55,13 +55,13 @@ exports.analyticsController = {
             res.status(200).json(data);
         } catch (error) {
             console.error('Error fetching attendance distribution:', error);
-            res.status(500).send('Error fetching attendance distribution: ' + error.message);
+            next(error);
         }
     },
 
     // Ranks a trainer's trainees by a chosen metric (body weight or strength).
     //GET /api/analytics/leaderboard/:trainerId?metric=body_weight|strength
-    async getLeaderboard(req, res) {
+    async getLeaderboard(req, res, next) {
         const { trainerId } = req.params;
         if (isInvalidId(trainerId)) {
             return res.status(400).json({ message: 'Invalid trainerId: must be a positive integer' });
@@ -74,13 +74,13 @@ exports.analyticsController = {
             res.status(200).json(data);
         } catch (error) {
             console.error('Error fetching leaderboard:', error);
-            res.status(500).send('Error fetching leaderboard: ' + error.message);
+            next(error);
         }
     },
 
     // Gives training volume over time so you can see progress trends.
     //GET /api/analytics/volume-over-time/:trainerId
-    async getVolumeOverTime(req, res) {
+    async getVolumeOverTime(req, res, next) {
         const { trainerId } = req.params;
         if (isInvalidId(trainerId)) {
             return res.status(400).json({ message: 'Invalid trainerId: must be a positive integer' });
@@ -93,13 +93,13 @@ exports.analyticsController = {
             res.status(200).json(data);
         } catch (error) {
             console.error('Error fetching volume over time:', error);
-            res.status(500).send('Error fetching volume over time: ' + error.message);
+            next(error);
         }
     },
 
     // Builds the heatmap data of when trainees are most active.
     //GET /api/analytics/engagement-heatmap/:trainerId
-    async getEngagementHeatmap(req, res) {
+    async getEngagementHeatmap(req, res, next) {
         const { trainerId } = req.params;
         if (isInvalidId(trainerId)) {
             return res.status(400).json({ message: 'Invalid trainerId: must be a positive integer' });
@@ -112,12 +112,12 @@ exports.analyticsController = {
             res.status(200).json(data);
         } catch (error) {
             console.error('Error fetching engagement heatmap:', error);
-            res.status(500).send('Error fetching engagement heatmap: ' + error.message);
+            next(error);
         }
     },
 
     //GET /api/analytics/trainee-weekly-activity/:traineeId
-    async getTraineeWeeklyActivity(req, res) {
+    async getTraineeWeeklyActivity(req, res, next) {
         const { traineeId } = req.params;
         if (isInvalidId(traineeId)) {
             return res.status(400).json({ message: 'Invalid traineeId: must be a positive integer' });
@@ -130,12 +130,12 @@ exports.analyticsController = {
             res.status(200).json(data);
         } catch (error) {
             console.error('Error fetching trainee weekly activity:', error);
-            res.status(500).send('Error fetching trainee weekly activity: ' + error.message);
+            next(error);
         }
     },
 
     //GET /api/analytics/trainee-recent-sessions/:traineeId
-    async getTraineeRecentSessions(req, res) {
+    async getTraineeRecentSessions(req, res, next) {
         const { traineeId } = req.params;
         if (isInvalidId(traineeId)) {
             return res.status(400).json({ message: 'Invalid traineeId: must be a positive integer' });
@@ -148,7 +148,7 @@ exports.analyticsController = {
             res.status(200).json(data);
         } catch (error) {
             console.error('Error fetching trainee recent sessions:', error);
-            res.status(500).send('Error fetching trainee recent sessions: ' + error.message);
+            next(error);
         }
     },
 };

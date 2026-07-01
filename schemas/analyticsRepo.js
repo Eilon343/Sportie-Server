@@ -2,10 +2,10 @@
 
 // All SQL for the analytics feature lives here. One async method per query,
 // parameterized with mysql2 placeholders (no string interpolation of inputs).
-// Each method opens and closes its own connection, matching the existing
-// per-handler connection pattern used across the controllers.
+// Queries run through the shared connection pool, which acquires and releases a
+// connection per statement automatically.
 
-// Little helper that runs a SQL query and hands back the rows, then closes the connection.
+// Little helper that runs a SQL query through the pool and hands back the rows.
 async function runQuery(sql, params = []) {
     const pool = await dbConnection.createConnection();
     const [rows] = await pool.execute(sql, params);

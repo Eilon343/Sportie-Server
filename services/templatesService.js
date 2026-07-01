@@ -229,18 +229,17 @@ exports.templatesService = {
                 }))
             }));
 
-        // Reuse the existing plan-save path (writes training_plans + plan_exercises in its own
-        // transaction and auto-inserts any unknown exercises). New plan is is_active = 1.
+        // Reuse the existing plan-save path (writes training_plans + plan_exercises and
+        // auto-inserts any unknown exercises). deactivateOthers makes the save and the
+        // "collapse to a single active plan" step run in ONE transaction, so a failure can
+        // never leave the trainee with two active plans (mirrors the meal-assign path).
         const planId = await planService.savePlan({
             traineeId,
             goal: shaped.goal,
             daysPerWeek: days.length,
-            days
+            days,
+            deactivateOthers: true
         });
-
-        // Collapse to a single active plan. Done after the save so a save failure never
-        // leaves the trainee with zero active plans.
-        await templatesRepo.deactivateOtherActivePlansTx(traineeId, planId);
 
         return planId;
     },

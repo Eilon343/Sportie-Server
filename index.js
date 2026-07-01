@@ -52,6 +52,17 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
+// Central error handler. Controllers forward failures here via next(error); it
+// maps a tagged err.status to that code (with its safe message) and otherwise
+// returns a generic 500 without exposing internal error details to the client.
+// Every response here is JSON shaped as { message }.
+app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  const status = (err.status && err.status >= 400 && err.status < 600) ? err.status : 500;
+  const message = status >= 500 ? 'Internal server error' : (err.message || 'Request failed');
+  res.status(status).json({ message });
+});
+
 app.listen(port, () => {
     console.log(`Server is listening on port ${port}`);
 })

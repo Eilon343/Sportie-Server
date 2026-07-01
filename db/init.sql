@@ -50,6 +50,10 @@ CREATE TABLE IF NOT EXISTS trainees (
     last_activity VARCHAR(255),
     avatar_color  VARCHAR(50),
     avatar_url    LONGTEXT,
+    -- Trainer-managed fields (set via PUT /api/trainers/:id/trainees/:id).
+    status         VARCHAR(50),
+    start_weight   DECIMAL(6,2),
+    current_weight DECIMAL(6,2),
     trainer_id    INT,
     FOREIGN KEY (trainer_id)  REFERENCES trainers(trainer_id),
     FOREIGN KEY (trainee_id)  REFERENCES users(user_id) ON DELETE CASCADE
@@ -66,7 +70,13 @@ CREATE TABLE IF NOT EXISTS exercises (
     target      VARCHAR(100) NOT NULL,
     equipment   VARCHAR(100) NOT NULL,
     gif_url     VARCHAR(255) NOT NULL,
-    difficulty  VARCHAR(50)
+    difficulty  VARCHAR(50),
+    -- Extra catalogue fields cached from ExerciseDB. secondary_muscles and
+    -- instructions are stored as JSON strings.
+    category          VARCHAR(100),
+    secondary_muscles TEXT,
+    instructions      TEXT,
+    description       TEXT
 );
 
 -- ──────────────────────────────────────────────────────────────────────────────
